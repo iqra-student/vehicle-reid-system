@@ -1,3 +1,6 @@
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -10,6 +13,7 @@ app.use(cors());
 
 // Auth Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/cameras', require('./routes/cameraRoutes'));
 
 // Connect DB & Start Server
 const PORT = process.env.PORT || 5000;
