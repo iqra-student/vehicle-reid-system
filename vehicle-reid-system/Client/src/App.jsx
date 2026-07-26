@@ -5,9 +5,10 @@ import RoleRoute from "./routes/RoleRoute";
 
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
+import RegisterCameraPage from "./pages/RegisterCameraPage";
+import AdminCameraApprovals from "./pages/AdminCameraApprovals";
 
-// Placeholder dashboards / camera pages — replace with real components
-// as they're built out. Kept here so the routing below is fully functional.
+// Placeholder dashboards — replace with real components as they're built out.
 function OperatorDashboard() {
   return (
     <div className="p-8">
@@ -24,22 +25,6 @@ function AdminDashboard() {
   );
 }
 
-function RegisterCameraPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-xl font-semibold">Register a camera</h1>
-    </div>
-  );
-}
-
-function AdminCameraApprovals() {
-  return (
-    <div className="p-8">
-      <h1 className="text-xl font-semibold">Pending camera approvals</h1>
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -51,13 +36,14 @@ export default function App() {
 
           {/* Any authenticated user */}
           <Route element={<ProtectedRoute />}>
+            {/* Shared: both operators and admins can submit a camera */}
+            <Route element={<RoleRoute allowedRoles={["operator", "admin"]} />}>
+              <Route path="/register-camera" element={<RegisterCameraPage />} />
+            </Route>
+
             {/* Operator-only routes */}
             <Route element={<RoleRoute allowedRoles={["operator"]} />}>
               <Route path="/operator/dashboard" element={<OperatorDashboard />} />
-              <Route
-                path="/operator/register-camera"
-                element={<RegisterCameraPage />}
-              />
             </Route>
 
             {/* Admin-only routes */}
