@@ -16,8 +16,6 @@ export function AuthProvider({ children }) {
   const persistSession = useCallback((responseData) => {
     const { token: newToken, user: userFromApi } = responseData;
 
-    // Prefer the user object the backend returns; fall back to decoding the JWT
-    // in case the backend only returns a token.
     let resolvedUser = userFromApi;
     if (!resolvedUser && newToken) {
       try {
@@ -46,8 +44,6 @@ export function AuthProvider({ children }) {
       setLoading(true);
       setError(null);
       try {
-        // NOTE: role is intentionally never sent from the frontend.
-        // The backend always forces role: "operator" on signup.
         const { data } = await axiosInstance.post("/auth/signup", {
           name,
           email,
@@ -58,6 +54,32 @@ export function AuthProvider({ children }) {
       } catch (err) {
         const message =
           err.response?.data?.message || "Signup failed. Please try again.";
+        setError(message);
+        throw new Error(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [persistSession]
+  );
+
+  // New: admin signup — separate backend route, gated by a secret key.
+  const adminSignup = useCallback(
+    async (name, email, password) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await axiosInstance.post("/auth/admin-signup", {
+          name,
+          email,
+          password,
+        });
+        const resolvedUser = persistSession(data);
+        return resolvedUser;
+      } catch (err) {
+        const message =
+          err.response?.data?.message ||
+          "Admin signup failed. Please try again.";
         setError(message);
         throw new Error(message);
       } finally {
@@ -105,6 +127,7 @@ export function AuthProvider({ children }) {
     error,
     login,
     signup,
+    adminSignup,
     logout,
   };
 

@@ -24,3 +24,6 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch(err => console.error('MongoDB connection error:', err));
   
+
+const detectionRoutes = require('./routes/detectionRoutes');
+app.use('/api/detection', detectionRoutes);

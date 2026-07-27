@@ -4,9 +4,10 @@ const Camera = require('../models/Camera');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
+// Protect ALL camera routes in this file with authMiddleware
 router.use(authMiddleware);
 
-// POST /api/cameras — operators submit, status defaults to 'pending'
+// POST /api/cameras — operators submit (pending), admins submit (approved)
 router.post('/', roleMiddleware('operator', 'admin'), async (req, res) => {
   try {
     const camera = await Camera.create({
@@ -21,13 +22,25 @@ router.post('/', roleMiddleware('operator', 'admin'), async (req, res) => {
   }
 });
 
-// GET /api/cameras — everyone sees approved cameras only
+// GET /api/cameras — Get live feeds based on user role
 router.get('/', async (req, res) => {
   try {
-    const cameras = await Camera.find({ status: 'approved' });
-    res.json(cameras);
+    if (req.user.role === 'admin') {
+      // Admins see ALL approved cameras
+      const cameras = await Camera.find({ status: 'approved' }).populate('submittedBy', 'name email role');
+      return res.json(cameras);
+    }
+
+    // Operators see ONLY approved cameras submitted by operators
+    const cameras = await Camera.find({ status: 'approved' })
+      .populate('submittedBy', 'name email role');
+
+    // Filter to ensure operators don't see admin-registered cameras
+    const operatorVisibleCameras = cameras.filter(cam => cam.submittedBy?.role !== 'admin');
+
+    res.json(operatorVisibleCameras);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching cameras', error: err.message });
+    res.status(500).json({ message: "Server error loading cameras", error: err.message });
   }
 });
 

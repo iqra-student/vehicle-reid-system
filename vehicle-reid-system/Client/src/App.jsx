@@ -1,27 +1,28 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import OperatorDashboard from "./pages/Operator/OperatorDashboard";
 import RoleRoute from "./routes/RoleRoute";
+import DetectionTest from './Components/DetectionTest';
 
-import SignInPage from "./pages/SignInPage";
-import SignUpPage from "./pages/SignUpPage";
+import SignInPage from "./pages/Operator/SignInPage";
+import SignUpPage from "./pages/Operator/SignUpPage";
+import AdminSignUpPage from "./pages/Admin/AdminSignUpPage";
+import AdminSignInPage from "./pages/Admin/AdminSignInPage";
 import RegisterCameraPage from "./pages/RegisterCameraPage";
-import AdminCameraApprovals from "./pages/AdminCameraApprovals";
+import AdminCameraApprovals from "./pages/Admin/AdminCameraApprovals";
 
-// Placeholder dashboards — replace with real components as they're built out.
-function OperatorDashboard() {
-  return (
-    <div className="p-8">
-      <h1 className="text-xl font-semibold">Operator dashboard</h1>
-    </div>
-  );
-}
 
-function AdminDashboard() {
-  return (
-    <div className="p-8">
-      <h1 className="text-xl font-semibold">Admin dashboard</h1>
-    </div>
+
+// Redirects bare "/admin" based on current auth state.
+function AdminIndexRedirect() {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/signin" replace />;
+  return user?.role === "admin" ? (
+    <Navigate to="/admin/dashboard" replace />
+  ) : (
+    <Navigate to="/signin" replace />
   );
 }
 
@@ -33,20 +34,24 @@ export default function App() {
           {/* Public routes */}
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/admin/signup" element={<AdminSignUpPage />} />
+          <Route path="/admin/signin" element={<AdminSignInPage />} />
+
+          {/* Bare "/admin" redirects based on auth state */}
+          <Route path="/admin" element={<AdminIndexRedirect />} />
+
+          <Route path="/test-detection" element={<DetectionTest />} />
 
           {/* Any authenticated user */}
           <Route element={<ProtectedRoute />}>
-            {/* Shared: both operators and admins can submit a camera */}
             <Route element={<RoleRoute allowedRoles={["operator", "admin"]} />}>
               <Route path="/register-camera" element={<RegisterCameraPage />} />
             </Route>
 
-            {/* Operator-only routes */}
             <Route element={<RoleRoute allowedRoles={["operator"]} />}>
               <Route path="/operator/dashboard" element={<OperatorDashboard />} />
             </Route>
 
-            {/* Admin-only routes */}
             <Route element={<RoleRoute allowedRoles={["admin"]} />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route
