@@ -16,9 +16,11 @@ import AdminSignInPage from "./pages/Admin/AdminSignInPage";
 // Active Operator Pages
 import OperatorDashboard from "./pages/Operator/OperatorDashboard";
 import ApprovedCamerasPage from "./pages/Admin/ApprovedCamerasPage";
-import VehicleReIdPage from "./pages/Operator/VehicleReIdPage";
 import RegisterCameraPage from "./pages/RegisterCameraPage";
 import CameraManagementPage from "./pages/Operator/CameraManagementPage";
+
+// Re-ID Comparison Component
+import VehicleCompare from "./Components/VehicleCompare"; // Make sure path matches your folder structure!
 
 // Placeholder Operator Pages (Prevents 404 / Signin Redirects)
 import PlateSearchPage from "./pages/Operator/PlateSearchPage";
@@ -80,7 +82,11 @@ export default function App() {
               <Route element={<OperatorLayout />}>
                 <Route path="/operator/dashboard" element={<OperatorDashboard />} />
                 <Route path="/operator/live-monitoring" element={<ApprovedCamerasPage />} />
-                <Route path="/operator/reid-review" element={<VehicleReIdPage />} />
+                
+                {/* Vehicle Re-ID Comparison Page mounted directly here */}
+                <Route path="/operator/reid-review" element={<VehicleCompare />} />
+                <Route path="/operator/compare" element={<VehicleCompare />} />
+
                 <Route path="/operator/register-camera" element={<RegisterCameraPage />} />
                 <Route path="/operator/camera-management" element={<CameraManagementPage />} />
 

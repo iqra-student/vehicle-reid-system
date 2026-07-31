@@ -7,7 +7,9 @@ const detectionSchema = new mongoose.Schema({
     {
       className: String,
       confidence: Number,
-      bbox: [Number] // [xmin, ymin, xmax, ymax]
+      bbox: [Number], // [xmin, ymin, xmax, ymax]
+      embedding: [Number], // 512-d OSNet feature vector (Optional for Re-ID)
+      assignedVehicleId: String // e.g. "VEHICLE_101" after comparison
     }
   ],
   timestamp: {

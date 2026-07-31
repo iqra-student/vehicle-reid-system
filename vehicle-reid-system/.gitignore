@@ -7,3 +7,12 @@ venv/
 __pycache__/
 **/__pycache__/
 *.pyc
+# Ignore heavy dataset files
+ml_service/Data/
+ml_service/data/
+*.zip
+# Model weights & binary artifacts
+*.pth
+*.pt
+*.onnx
+ml_service/weights/
