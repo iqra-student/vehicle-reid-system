@@ -1,8 +1,19 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getApprovedCameras } from "../../api/cameraApi";
-import RegisterCameraPage from "../RegisterCameraPage"; // Shared Modal Component
-import { Camera, Plus, RefreshCw, AlertTriangle, Search } from "lucide-react";
+import RegisterCameraPage from "../RegisterCameraPage";
+import {
+  Camera,
+  Plus,
+  RefreshCw,
+  Search,
+  ChevronDown,
+  Eye,
+  Edit2,
+  Trash2,
+  MapPin,
+} from "lucide-react";
 
 export default function CameraManagementPage() {
   const navigate = useNavigate();
@@ -46,23 +57,28 @@ export default function CameraManagementPage() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* 1. TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-[#16202E] p-5 rounded-2xl border border-slate-700/60 shadow-xl text-white">
-        <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <Camera className="w-5 h-5 text-[#3AB0FF]" />
-            Camera Management
-          </h1>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Operator • Camera network configuration
-          </p>
+    <div className="space-y-6 text-[#0C1A2B] font-sans">
+      
+      {/* 1. MAIN HEADER PANEL */}
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-[#0C1A2B] p-5 rounded-2xl border border-slate-800 shadow-xl text-white">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 bg-[#16202E] border border-slate-700/80 rounded-xl text-[#3AB0FF] shadow-inner">
+            <Camera className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              Camera Management
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5 font-medium">
+              Operator • Camera network configuration
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={fetchCameras}
-            className="p-2.5 text-slate-400 hover:text-white bg-[#0D131D] rounded-xl border border-slate-700 transition-colors"
+            className="p-2.5 text-slate-300 hover:text-white bg-[#16202E] hover:bg-slate-800 rounded-xl border border-slate-700/80 transition-all shadow-sm"
             title="Refresh List"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-[#3AB0FF]" : ""}`} />
@@ -70,108 +86,145 @@ export default function CameraManagementPage() {
 
           <button
             onClick={() => setShowModal(true)}
-            className="bg-[#3AB0FF] hover:bg-[#289BEB] text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all"
+            className="bg-[#3AB0FF] hover:bg-[#7BA4D0] text-[#0C1A2B] font-bold text-xs px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg flex items-center gap-2 transition-all active:scale-[0.98]"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 stroke-[3]" />
             Add Camera
           </button>
         </div>
       </div>
 
-      {/* 2. WARNING BANNER */}
-      <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 flex items-center gap-3 text-xs text-amber-300">
-        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-        <span>
-          <strong>Notice:</strong> Camera configuration changes will affect the live surveillance network.
-        </span>
-      </div>
-
-      {/* 3. CONTROLS & CAMERA TABLE PANEL */}
-      <div className="bg-[#16202E] rounded-2xl p-6 border border-slate-700/60 shadow-xl space-y-4 text-white">
-        {/* Search & Status Filter */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      {/* 2. CONTROLS & CAMERA TABLE PANEL */}
+      <div className="bg-[#0C1A2B] rounded-2xl p-6 border border-slate-800 shadow-xl space-y-5 text-white">
+        
+        {/* Search & Status Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
             <input
               type="text"
               placeholder="Search cameras..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#0D131D] border border-slate-700 text-xs text-white pl-9 pr-4 py-2.5 rounded-xl focus:border-[#3AB0FF] focus:outline-none"
+              className="w-full bg-[#16202E] border border-slate-700/80 text-xs text-white placeholder-slate-400 pl-10 pr-4 py-2.5 rounded-xl focus:border-[#3AB0FF] focus:outline-none transition-all font-medium"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#0D131D] border border-slate-700 text-xs text-white rounded-xl px-3 py-2.5 focus:border-[#3AB0FF] focus:outline-none font-semibold"
+              className="w-full sm:w-36 appearance-none bg-[#16202E] border border-slate-700/80 text-xs text-slate-200 rounded-xl px-3.5 py-2.5 pr-8 focus:border-[#3AB0FF] focus:outline-none font-semibold cursor-pointer"
             >
-              <option>All Status</option>
-              <option>Online</option>
-              <option>Offline</option>
+              <option value="All Status">All Status</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
             </select>
+            <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Data Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-slate-800/60">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
-                <th className="pb-3">Camera ID</th>
-                <th className="pb-3">Name</th>
-                <th className="pb-3">Location</th>
-                <th className="pb-3">GPS Coordinates</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3">Resolution</th>
-                <th className="pb-3">FPS</th>
-                <th className="pb-3">Angle</th>
-                <th className="pb-3 text-right">Actions</th>
+              <tr className="bg-[#16202E] text-slate-400 uppercase tracking-wider font-bold text-[11px] border-b border-slate-800">
+                <th className="py-3.5 px-4">Camera ID</th>
+                <th className="py-3.5 px-4">Name</th>
+                <th className="py-3.5 px-4">Location</th>
+                <th className="py-3.5 px-4">GPS Coordinates</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Resolution</th>
+                <th className="py-3.5 px-4">FPS</th>
+                <th className="py-3.5 px-4">Angle</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-medium text-slate-200">
+            <tbody className="divide-y divide-slate-800/70 font-medium text-slate-200">
               {filteredCameras.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-8 text-center text-slate-500">
-                    {loading ? "Fetching cameras..." : "No cameras found in system network."}
+                  <td colSpan="9" className="py-12 text-center text-slate-400 bg-[#0C1A2B]">
+                    {loading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin text-[#3AB0FF]" />
+                        <span>Fetching cameras from network...</span>
+                      </div>
+                    ) : (
+                      "No cameras found matching current filters."
+                    )}
                   </td>
                 </tr>
               ) : (
                 filteredCameras.map((cam, idx) => {
                   const targetCamId = cam.camId || cam._id || `CAM-00${idx + 1}`;
                   return (
-                    <tr key={cam._id || idx} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3.5 font-mono font-bold text-[#3AB0FF]">{targetCamId}</td>
-                      <td className="py-3.5 font-bold text-white">{cam.name}</td>
-                      <td className="py-3.5 text-slate-300">{cam.location}</td>
-                      <td className="py-3.5 font-mono text-slate-400">
+                    <tr 
+                      key={cam._id || idx} 
+                      className="hover:bg-[#16202E]/70 transition-colors group"
+                    >
+                      {/* Camera ID */}
+                      <td className="py-3.5 px-4 font-mono font-semibold text-[#3AB0FF]">
+                        {targetCamId}
+                      </td>
+                      
+                      {/* Name */}
+                      <td className="py-3.5 px-4 font-bold text-white tracking-wide">
+                        {cam.name}
+                      </td>
+                      
+                      {/* Location */}
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          {cam.location}
+                        </span>
+                      </td>
+                      
+                      {/* GPS Coordinates */}
+                      <td className="py-3.5 px-4 font-mono text-slate-400 text-[11px]">
                         {cam.latitude && cam.longitude
                           ? `${cam.latitude}, ${cam.longitude}`
                           : "24.8607, 67.0011"}
                       </td>
-                      <td className="py-3.5">
-                        <span className="inline-flex items-center gap-1 font-bold font-mono px-2 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 text-[10px]">
-                          ● ONLINE
+                      
+                      {/* Status Badge */}
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center gap-1.5 font-bold font-mono px-2.5 py-0.5 rounded-md text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 text-[10px] tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          ONLINE
                         </span>
                       </td>
-                      <td className="py-3.5 font-mono text-slate-300">{cam.resolution || "1080p"}</td>
-                      <td className="py-3.5 font-mono text-slate-300">{cam.frameRate || "30"}</td>
-                      <td className="py-3.5 font-mono text-slate-300">{cam.angle || "120"}°</td>
-                      <td className="py-3.5 text-right space-x-1.5">
-                        {/* View Action Switch to Live Monitoring */}
-                        <button
-                          onClick={() => navigate(`/operator/live-monitoring?camId=${targetCamId}`)}
-                          className="px-2.5 py-1 text-[11px] font-bold bg-[#0D131D] text-[#3AB0FF] hover:bg-[#121B2A] border border-slate-700 rounded-lg transition-colors"
-                        >
-                          View
-                        </button>
-                        <button className="px-2.5 py-1 text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-lg transition-colors">
-                          Edit
-                        </button>
-                        <button className="px-2.5 py-1 text-[11px] font-semibold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg transition-colors">
-                          Delete
-                        </button>
+                      
+                      {/* Specs */}
+                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                        {cam.resolution || "1920x1080"}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                        {cam.frameRate || "30"}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                        {cam.angle || "45"}°
+                      </td>
+                      
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => navigate(`/operator/live-monitoring?camId=${targetCamId}`)}
+                            className="px-2.5 py-1 text-[11px] font-bold bg-[#16202E] text-[#3AB0FF] hover:bg-[#3AB0FF] hover:text-[#0C1A2B] border border-slate-700/80 rounded-lg transition-all flex items-center gap-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View
+                          </button>
+                          <button className="px-2.5 py-1 text-[11px] font-semibold bg-[#16202E] text-slate-300 hover:text-white hover:bg-slate-700/80 border border-slate-700/80 rounded-lg transition-all flex items-center gap-1">
+                            <Edit2 className="w-3 h-3" />
+                            Edit
+                          </button>
+                          <button className="px-2.5 py-1 text-[11px] font-semibold bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white border border-rose-500/20 rounded-lg transition-all flex items-center gap-1">
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -182,7 +235,7 @@ export default function CameraManagementPage() {
         </div>
       </div>
 
-      {/* 4. SHARED MODAL COMPONENT */}
+      {/* 3. SHARED MODAL COMPONENT */}
       <RegisterCameraPage
         isOpen={showModal}
         onClose={() => setShowModal(false)}

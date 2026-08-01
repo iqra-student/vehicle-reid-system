@@ -1,226 +1,259 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Video,
-  Eye,
-  Activity,
-  AlertTriangle,
+  Car,
+  Scan,
+  Bell,
   Flame,
   FileSearch,
-  Search,
   MapPin,
-  TrendingUp,
+  BarChart2,
+  RefreshCcw,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export default function OperatorDashboard() {
-  // Mock Recent Sightings matching the Figma table
-  const sightings = [
-    {
-      id: "VH-8821",
-      type: "Sedan",
-      color: "White",
-      plate: "KHI-2847",
-      camera: "CAM-001",
-      timestamp: "14:32:18",
-      confidence: "97.2%",
-      status: "Confirmed",
-    },
-    {
-      id: "VH-8820",
-      type: "SUV",
-      color: "Black",
-      plate: "LWR-1193",
-      camera: "CAM-003",
-      timestamp: "14:31:44",
-      confidence: "91.8%",
-      status: "Reviewing",
-    },
-    {
-      id: "VH-8819",
-      type: "Pickup",
-      color: "Silver",
-      plate: "Not detected",
-      camera: "CAM-005",
-      timestamp: "14:30:57",
-      confidence: "86.4%",
-      status: "Low Conf.",
-    },
-    {
-      id: "VH-8818",
-      type: "Motorcycle",
-      color: "Red",
-      plate: "KHI-9034",
-      camera: "CAM-002",
-      timestamp: "14:30:22",
-      confidence: "94.1%",
-      status: "Confirmed",
-    },
-    {
-      id: "VH-8817",
-      type: "Bus",
-      color: "Yellow",
-      plate: "Not detected",
-      camera: "CAM-006",
-      timestamp: "14:29:45",
-      confidence: "79.3%",
-      status: "Low Conf.",
-    },
+  const stats = [
+    { label: "Active Cameras", value: "12", sub: "2 offline", alert: false, border: "border-l-[#0D2440]", iconBg: "bg-[#0D2440]", icon: <Video className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Vehicles Detected", value: "2,847", sub: "Today", alert: false, border: "border-l-[#2E5E99]", iconBg: "bg-[#2E5E99]", icon: <Car className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Vehicles Re-ID", value: "341", sub: "99.3% accuracy", alert: false, border: "border-l-[#7BA4D0]", iconBg: "bg-[#7BA4D0]", icon: <Scan className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Active Alerts", value: "7", sub: "5 critical", alert: "critical", border: "border-l-[#B25C50]", iconBg: "bg-[#0D2440]", icon: <Bell className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Congestion Events", value: "4", sub: "2 ongoing", alert: "warning", border: "border-l-[#2E5E99]", iconBg: "bg-[#2E5E99]", icon: <Flame className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Investigations", value: "18", sub: "5 active", alert: false, border: "border-l-[#0D2440]", iconBg: "bg-[#0D2440]", icon: <FileSearch className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
   ];
 
-  return (
-    <div className="space-y-6 text-slate-800">
-      {/* 1. TOP STATS BAR (Dark Navy / Cyan Accents) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: "Active Cameras", val: "12", sub: "2 offline", icon: Video },
-          { label: "Vehicles Detected", val: "2,847", sub: "Today", icon: Eye },
-          { label: "Vehicles Re-ID", val: "341", sub: "89.3% accuracy", icon: Activity },
-          { label: "Active Alerts", val: "7", sub: "3 critical", icon: AlertTriangle, alert: true },
-          { label: "Congestion Events", val: "4", sub: "2 ongoing", icon: Flame },
-          { label: "Investigations", val: "18", sub: "5 active", icon: FileSearch },
-        ].map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={idx}
-              className="bg-[#16202E] p-3.5 rounded-xl border border-slate-700/60 shadow-md text-white flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[11px] font-medium">{stat.label}</span>
-                <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
-                  LIVE
-                </span>
-              </div>
-              <div className="my-1.5 flex items-baseline justify-between">
-                <span className="text-xl font-bold font-mono">{stat.val}</span>
-                <Icon className={`w-4 h-4 ${stat.alert ? "text-rose-400" : "text-[#3AB0FF]"}`} />
-              </div>
-              <span className="text-[10px] text-slate-400">{stat.sub}</span>
-            </div>
-          );
-        })}
-      </div>
+  const sightings = [
+    { id: "VH-8821", type: "Sedan", color: "White", swatch: "#F4F6F8", plate: "KHI-2847", camera: "CAM-001", timestamp: "14:32:18", confidence: "97.2%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
+    { id: "VH-8820", type: "SUV", color: "Black", swatch: "#0D2440", plate: "LHR-1193", camera: "CAM-003", timestamp: "14:31:44", confidence: "91.8%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
+    { id: "VH-8819", type: "Pickup", color: "Silver", swatch: "#B9C2CC", plate: "Not detected", camera: "CAM-005", timestamp: "14:30:57", confidence: "86.4%", confClass: "text-[#C58A3C] bg-[#FBF3E7]" },
+    { id: "VH-8818", type: "Motorcycle", color: "Red", swatch: "#B25C50", plate: "KHI-9034", camera: "CAM-002", timestamp: "14:30:22", confidence: "94.1%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
+    { id: "VH-8817", type: "Bus", color: "Yellow", swatch: "#C58A3C", plate: "Not detected", camera: "CAM-006", timestamp: "14:29:45", confidence: "70.3%", confClass: "text-[#C58A3C] bg-[#FBF3E7]" },
+  ];
 
-      {/* 2. MAP & DETECTIONS ROW */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Live City Map Canvas (Karachi Traffic Network Node Representation) */}
-        <div className="lg:col-span-8 bg-[#16202E] p-5 rounded-2xl border border-slate-700/60 shadow-lg text-white space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
-            <div>
-              <h2 className="text-sm font-bold flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#3AB0FF]" />
-                Live City Map — Camera Traffic Network
-              </h2>
-              <p className="text-[11px] text-slate-400">Real-time camera node positions & movement</p>
+  const nodes = [
+    { top: "30%", left: "38%", label: "CAM-001", alert: false },
+    { top: "62%", left: "28%", label: "CAM-002", alert: false },
+    { top: "70%", left: "66%", label: "CAM-003", alert: false },
+    { top: "24%", left: "70%", label: "CAM-004", alert: true },
+  ];
+
+  const bars = [22, 31, 28, 44, 52, 68, 88, 74, 58, 63, 41, 30];
+  const peak = Math.max(...bars);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* STATS GRID */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className={`bg-white border border-[#E4EAF2] border-l-4 ${s.border} rounded-xl p-3.5 shadow-sm flex flex-col justify-between`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}>
+                {s.icon}
+              </div>
+              <span className="font-mono text-[8.5px] tracking-widest text-[#2E5E99] border border-[#7BA4D0] px-1.5 py-0.5 rounded bg-[#E7F0FA] font-bold">
+                LIVE
+              </span>
             </div>
-            <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" /> Online</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-400" /> Offline</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> Alert</span>
+            <div>
+              <div className="text-[10.5px] text-[#4B617D] tracking-wider uppercase font-bold mb-1">
+                {s.label}
+              </div>
+              <div className="font-display text-2xl font-bold text-[#0D2440] tracking-tight">
+                {s.value}
+              </div>
+              <div
+                className={`text-[10.5px] mt-1 font-mono font-medium ${
+                  s.alert === "critical"
+                    ? "text-[#B25C50] font-bold"
+                    : s.alert === "warning"
+                    ? "text-[#C58A3C] font-bold"
+                    : "text-[#93A2B8]"
+                }`}
+              >
+                {s.sub}
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* PANELS ROW */}
+      <section className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-3.5 items-stretch">
+        
+        {/* RADAR MAP PANEL */}
+        <div className="bg-white border border-[#E4EAF2] rounded-xl flex flex-col overflow-hidden shadow-sm">
+          <div className="flex items-start justify-between p-4 border-b border-[#EEF2F8]">
+            <div>
+              <div className="font-display text-sm font-semibold text-[#0D2440] flex items-center gap-2">
+                <MapPin className="w-4 h-4 stroke-[#2E5E99] stroke-[1.8] fill-none" />
+                Live City Map — Camera Traffic Network
+              </div>
+              <div className="text-xs text-[#93A2B8] mt-0.5">
+                Real-time camera node positions &amp; movement
+              </div>
+            </div>
+            <div className="flex gap-3 items-center pt-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] text-[#93A2B8] font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2E5E99]" />
+                Online
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-[#93A2B8] font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#93A2B8]" />
+                Offline
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-[#93A2B8] font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#B25C50]" />
+                Alert
+              </div>
             </div>
           </div>
 
-          {/* Node Connection Canvas */}
-          <div className="h-56 bg-[#0D131D] rounded-xl border border-slate-800 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
-            <div className="relative z-10 text-center">
-              <span className="text-xs text-slate-400 font-mono">[ Interactive Topology Network Active ]</span>
-              <div className="mt-3 flex items-center justify-center gap-8">
-                {["CAM-001", "CAM-002", "CAM-003", "CAM-004"].map((node, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <div className="w-4 h-4 rounded-full bg-[#3AB0FF] ring-4 ring-[#3AB0FF]/20 animate-pulse" />
-                    <span className="text-[10px] font-mono text-slate-300">{node}</span>
-                  </div>
-                ))}
+          <div className="relative flex-1 min-h-[250px] bg-[radial-gradient(circle_at_50%_50%,rgba(46,94,153,0.05),transparent_70%)] [background-size:34px_34px] bg-[linear-gradient(to_right,#EEF2F8_1px,transparent_1px),linear-gradient(to_bottom,#EEF2F8_1px,transparent_1px)] flex items-center justify-center overflow-hidden">
+            <div className="relative w-[220px] h-[220px]">
+              <div className="absolute inset-0 border border-[#E4EAF2] rounded-full" />
+              <div className="absolute inset-[30px] border border-[#E4EAF2] rounded-full" />
+              <div className="absolute inset-[60px] border border-[#E4EAF2] rounded-full" />
+              <div className="absolute inset-[90px] border border-[#7BA4D0] rounded-full" />
+              
+              {/* Radar Grid Lines */}
+              <div className="absolute inset-0">
+                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#E4EAF2]" />
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-[#E4EAF2]" />
               </div>
+
+              {/* Sweep Animation */}
+              <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,rgba(46,94,153,0.16),transparent_30%)] animate-spin [animation-duration:4s]" />
+
+              {/* Camera Nodes */}
+              {nodes.map((n) => (
+                <div
+                  key={n.label}
+                  className={`absolute w-2.5 h-2.5 rounded-full border-2 border-white -translate-x-1/2 -translate-y-1/2 ${
+                    n.alert
+                      ? "bg-[#B25C50] shadow-[0_0_0_1px_#B25C50]"
+                      : "bg-[#2E5E99] shadow-[0_0_0_1px_#2E5E99]"
+                  }`}
+                  style={{ top: n.top, left: n.left }}
+                >
+                  <span className="absolute top-3 left-1/2 -translate-x-1/2 font-mono text-[8.5px] text-[#93A2B8] whitespace-nowrap">
+                    {n.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="absolute bottom-3 left-3.5 font-mono text-[9px] text-[#93A2B8] tracking-wider">
+              INTERACTIVE TOPOLOGY NETWORK ACTIVE
             </div>
           </div>
         </div>
 
-        {/* Hourly Detection Chart Placeholder */}
-        <div className="lg:col-span-4 bg-[#16202E] p-5 rounded-2xl border border-slate-700/60 shadow-lg text-white flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
-            <h2 className="text-sm font-bold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#3AB0FF]" />
-              Vehicle Detections — Today
-            </h2>
-          </div>
-          <div className="h-48 flex items-end justify-between gap-2 px-2 pt-4">
-            {[40, 65, 30, 85, 95, 70, 50].map((h, idx) => (
-              <div key={idx} className="w-full bg-slate-800 rounded-t-md relative group">
-                <div
-                  className="bg-[#3AB0FF] rounded-t-md hover:bg-[#00E5FF] transition-all"
-                  style={{ height: `${h}%` }}
-                />
+        {/* BAR CHART PANEL */}
+        <div className="bg-white border border-[#E4EAF2] rounded-xl flex flex-col overflow-hidden shadow-sm">
+          <div className="flex items-start justify-between p-4 border-b border-[#EEF2F8]">
+            <div>
+              <div className="font-display text-sm font-semibold text-[#0D2440] flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 stroke-[#2E5E99] stroke-[1.8] fill-none" />
+                Vehicle Detections — Today
               </div>
+              <div className="text-xs text-[#93A2B8] mt-0.5">
+                Hourly count across all online cameras
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex-1 flex items-end gap-1.5 p-4 pt-5 min-h-[250px]">
+            {bars.map((h, idx) => (
+              <div
+                key={idx}
+                className={`flex-1 rounded-t transition-all ${
+                  h === peak
+                    ? "bg-gradient-to-b from-[#7BA4D0] to-[#E7F0FA]"
+                    : "bg-gradient-to-b from-[#2E5E99] to-[#E7F0FA]"
+                }`}
+                style={{ height: `${h}%` }}
+              />
             ))}
           </div>
-          <p className="text-[10px] text-center text-slate-400 pt-2 border-t border-slate-800">
-            Hourly count across all online cameras
-          </p>
-        </div>
-      </div>
 
-      {/* 3. RECENT VEHICLE SIGHTINGS TABLE (White Card) */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-lg space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex justify-between px-4 pb-3.5 font-mono text-[8.5px] text-[#93A2B8]">
+            <span>00:00</span>
+            <span>06:00</span>
+            <span>12:00</span>
+            <span>18:00</span>
+            <span>NOW</span>
+          </div>
+        </div>
+      </section>
+
+      {/* TABLE PANEL */}
+      <section className="bg-white border border-[#E4EAF2] rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between p-4 border-b border-[#EEF2F8]">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Recent Vehicle Sightings</h2>
-            <p className="text-xs text-slate-500">Live detection feed across surveillance cameras</p>
+            <div className="font-display text-sm font-semibold text-[#0D2440]">
+              Recent Vehicle Sightings
+            </div>
+            <div className="text-xs text-[#93A2B8] mt-0.5">
+              Live detection feed across surveillance cameras
+            </div>
           </div>
           <Link
             to="/operator/reid-review"
-            className="bg-[#16202E] hover:bg-[#0D131D] text-[#3AB0FF] text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 transition-all flex items-center gap-1.5"
+            className="flex items-center gap-1.5 bg-[#0D2440] hover:bg-[#2E5E99] text-white rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors no-underline"
           >
-            <Search className="w-3.5 h-3.5" />
+            <RefreshCcw className="w-3.5 h-3.5 stroke-white stroke-2 fill-none" />
             Run Re-ID Search
           </Link>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider font-semibold">
-                <th className="pb-3">Vehicle ID</th>
-                <th className="pb-3">Type</th>
-                <th className="pb-3">Color</th>
-                <th className="pb-3">License Plate</th>
-                <th className="pb-3">Camera</th>
-                <th className="pb-3">Timestamp</th>
-                <th className="pb-3">Re-ID Conf.</th>
-                <th className="pb-3 text-right">Action</th>
+              <tr className="bg-[#FAFCFE] border-b border-[#E4EAF2]">
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Vehicle ID</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Type</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Color</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">License Plate</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Camera</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Timestamp</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Re-ID Conf.</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-[#EEF2F8] text-xs text-[#4B617D]">
               {sightings.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 font-mono font-bold text-[#16202E]">{row.id}</td>
-                  <td className="py-3">{row.type}</td>
-                  <td className="py-3">
+                <tr key={row.id} className="hover:bg-[#FAFCFE] transition-colors">
+                  <td className="font-mono text-[#0D2440] font-semibold px-4 py-3">{row.id}</td>
+                  <td className="px-4 py-3">{row.type}</td>
+                  <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full border border-slate-300 bg-slate-200" />
+                      <span className="w-2 h-2 rounded-full border border-[#E4EAF2]" style={{ backgroundColor: row.swatch }} />
                       {row.color}
                     </span>
                   </td>
-                  <td className="py-3 font-mono text-slate-900">{row.plate}</td>
-                  <td className="py-3 font-mono text-slate-500">{row.camera}</td>
-                  <td className="py-3 font-mono text-slate-500">{row.timestamp}</td>
-                  <td className="py-3">
-                    <span className="font-mono text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <td className={`font-mono px-4 py-3 ${row.plate === "Not detected" ? "text-[#93A2B8] italic" : ""}`}>
+                    {row.plate}
+                  </td>
+                  <td className="font-mono text-[11.5px] text-[#2E5E99] font-medium px-4 py-3">{row.camera}</td>
+                  <td className="font-mono text-[#93A2B8] px-4 py-3">{row.timestamp}</td>
+                  <td className="px-4 py-3">
+                    <span className={`font-mono font-semibold text-[11.5px] px-2 py-0.5 rounded ${row.confClass}`}>
                       {row.confidence}
                     </span>
                   </td>
-                  <td className="py-3 text-right">
-                    <button className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">
+                  <td className="px-4 py-3">
+                    <span className="text-[#2E5E99] text-xs font-semibold cursor-pointer hover:underline">
                       View
-                    </button>
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

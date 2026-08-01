@@ -276,3 +276,4 @@ export default function RegisterCameraPage({ isOpen, onClose, onSuccess }) {
     </div>
   );
 }
+
