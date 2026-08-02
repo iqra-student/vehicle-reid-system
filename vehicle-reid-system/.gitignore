@@ -16,3 +16,6 @@ ml_service/data/
 *.pt
 *.onnx
 ml_service/weights/
+
+# ML generated output
+ml_service/static/
