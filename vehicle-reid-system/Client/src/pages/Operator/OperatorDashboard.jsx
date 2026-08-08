@@ -1,25 +1,20 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Video,
   Car,
   Scan,
   Bell,
-  Flame,
-  FileSearch,
   MapPin,
   BarChart2,
-  RefreshCcw,
 } from "lucide-react";
 
 export default function OperatorDashboard() {
   const stats = [
-    { label: "Active Cameras", value: "12", sub: "2 offline", alert: false, border: "border-l-[#0D2440]", iconBg: "bg-[#0D2440]", icon: <Video className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Vehicles Detected", value: "2,847", sub: "Today", alert: false, border: "border-l-[#2E5E99]", iconBg: "bg-[#2E5E99]", icon: <Car className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Vehicles Re-ID", value: "341", sub: "99.3% accuracy", alert: false, border: "border-l-[#7BA4D0]", iconBg: "bg-[#7BA4D0]", icon: <Scan className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Active Alerts", value: "7", sub: "5 critical", alert: "critical", border: "border-l-[#B25C50]", iconBg: "bg-[#0D2440]", icon: <Bell className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Congestion Events", value: "4", sub: "2 ongoing", alert: "warning", border: "border-l-[#2E5E99]", iconBg: "bg-[#2E5E99]", icon: <Flame className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Investigations", value: "18", sub: "5 active", alert: false, border: "border-l-[#0D2440]", iconBg: "bg-[#0D2440]", icon: <FileSearch className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Active Cameras", value: "12", border: "border-l-[#0D2440]", iconBg: "bg-[#0D2440]", icon: <Video className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Vehicles Detected", value: "45", border: "border-l-[#2E5E99]", iconBg: "bg-[#2E5E99]", icon: <Car className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Vehicles Re-ID", value: "20", border: "border-l-[#7BA4D0]", iconBg: "bg-[#7BA4D0]", icon: <Scan className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+    { label: "Active Alerts", value: "7", border: "border-l-[#B25C50]", iconBg: "bg-[#0D2440]", icon: <Bell className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
   ];
 
   const sightings = [
@@ -30,32 +25,29 @@ export default function OperatorDashboard() {
     { id: "VH-8817", type: "Bus", color: "Yellow", swatch: "#C58A3C", plate: "Not detected", camera: "CAM-006", timestamp: "14:29:45", confidence: "70.3%", confClass: "text-[#C58A3C] bg-[#FBF3E7]" },
   ];
 
-  const nodes = [
-    { top: "30%", left: "38%", label: "CAM-001", alert: false },
-    { top: "62%", left: "28%", label: "CAM-002", alert: false },
-    { top: "70%", left: "66%", label: "CAM-003", alert: false },
-    { top: "24%", left: "70%", label: "CAM-004", alert: true },
-  ];
-
-  const bars = [22, 31, 28, 44, 52, 68, 88, 74, 58, 63, 41, 30];
+  const bars = [45, 62, 58, 71, 84, 96, 67]; // Mon–Sun vehicle counts
+  const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const peak = Math.max(...bars);
+
+  const reidConfidence = [
+    { name: "High Confidence", value: 62, count: 211, color: "#0c4d9e" },
+    { name: "Possible Match", value: 27, count: 92, color: "#4d83be" },
+    { name: "Unlikely", value: 11, count: 38, color: "#3a7698" },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
       {/* STATS GRID */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((s) => (
           <div
             key={s.label}
             className={`bg-white border border-[#E4EAF2] border-l-4 ${s.border} rounded-xl p-3.5 shadow-sm flex flex-col justify-between`}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}>
                 {s.icon}
               </div>
-              <span className="font-mono text-[8.5px] tracking-widest text-[#2E5E99] border border-[#7BA4D0] px-1.5 py-0.5 rounded bg-[#E7F0FA] font-bold">
-                LIVE
-              </span>
             </div>
             <div>
               <div className="text-[10.5px] text-[#4B617D] tracking-wider uppercase font-bold mb-1">
@@ -64,107 +56,28 @@ export default function OperatorDashboard() {
               <div className="font-display text-2xl font-bold text-[#0D2440] tracking-tight">
                 {s.value}
               </div>
-              <div
-                className={`text-[10.5px] mt-1 font-mono font-medium ${
-                  s.alert === "critical"
-                    ? "text-[#B25C50] font-bold"
-                    : s.alert === "warning"
-                    ? "text-[#C58A3C] font-bold"
-                    : "text-[#93A2B8]"
-                }`}
-              >
-                {s.sub}
-              </div>
             </div>
           </div>
         ))}
       </section>
 
-      {/* PANELS ROW */}
-      <section className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-3.5 items-stretch">
-        
-        {/* RADAR MAP PANEL */}
-        <div className="bg-white border border-[#E4EAF2] rounded-xl flex flex-col overflow-hidden shadow-sm">
-          <div className="flex items-start justify-between p-4 border-b border-[#EEF2F8]">
-            <div>
-              <div className="font-display text-sm font-semibold text-[#0D2440] flex items-center gap-2">
-                <MapPin className="w-4 h-4 stroke-[#2E5E99] stroke-[1.8] fill-none" />
-                Live City Map — Camera Traffic Network
-              </div>
-              <div className="text-xs text-[#93A2B8] mt-0.5">
-                Real-time camera node positions &amp; movement
-              </div>
-            </div>
-            <div className="flex gap-3 items-center pt-0.5">
-              <div className="flex items-center gap-1.5 text-[10px] text-[#93A2B8] font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#2E5E99]" />
-                Online
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-[#93A2B8] font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#93A2B8]" />
-                Offline
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-[#93A2B8] font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#B25C50]" />
-                Alert
-              </div>
-            </div>
-          </div>
-
-          <div className="relative flex-1 min-h-[250px] bg-[radial-gradient(circle_at_50%_50%,rgba(46,94,153,0.05),transparent_70%)] [background-size:34px_34px] bg-[linear-gradient(to_right,#EEF2F8_1px,transparent_1px),linear-gradient(to_bottom,#EEF2F8_1px,transparent_1px)] flex items-center justify-center overflow-hidden">
-            <div className="relative w-[220px] h-[220px]">
-              <div className="absolute inset-0 border border-[#E4EAF2] rounded-full" />
-              <div className="absolute inset-[30px] border border-[#E4EAF2] rounded-full" />
-              <div className="absolute inset-[60px] border border-[#E4EAF2] rounded-full" />
-              <div className="absolute inset-[90px] border border-[#7BA4D0] rounded-full" />
-              
-              {/* Radar Grid Lines */}
-              <div className="absolute inset-0">
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#E4EAF2]" />
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-[#E4EAF2]" />
-              </div>
-
-              {/* Sweep Animation */}
-              <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,rgba(46,94,153,0.16),transparent_30%)] animate-spin [animation-duration:4s]" />
-
-              {/* Camera Nodes */}
-              {nodes.map((n) => (
-                <div
-                  key={n.label}
-                  className={`absolute w-2.5 h-2.5 rounded-full border-2 border-white -translate-x-1/2 -translate-y-1/2 ${
-                    n.alert
-                      ? "bg-[#B25C50] shadow-[0_0_0_1px_#B25C50]"
-                      : "bg-[#2E5E99] shadow-[0_0_0_1px_#2E5E99]"
-                  }`}
-                  style={{ top: n.top, left: n.left }}
-                >
-                  <span className="absolute top-3 left-1/2 -translate-x-1/2 font-mono text-[8.5px] text-[#93A2B8] whitespace-nowrap">
-                    {n.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="absolute bottom-3 left-3.5 font-mono text-[9px] text-[#93A2B8] tracking-wider">
-              INTERACTIVE TOPOLOGY NETWORK ACTIVE
-            </div>
-          </div>
-        </div>
-
-        {/* BAR CHART PANEL */}
+      {/* CHARTS ROW */}
+      <section className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-3.5 items-stretch">
+        {/* VEHICLE DETECTIONS BAR CHART */}
         <div className="bg-white border border-[#E4EAF2] rounded-xl flex flex-col overflow-hidden shadow-sm">
           <div className="flex items-start justify-between p-4 border-b border-[#EEF2F8]">
             <div>
               <div className="font-display text-sm font-semibold text-[#0D2440] flex items-center gap-2">
                 <BarChart2 className="w-4 h-4 stroke-[#2E5E99] stroke-[1.8] fill-none" />
-                Vehicle Detections — Today
+                Vehicle Detections — Daily
               </div>
               <div className="text-xs text-[#93A2B8] mt-0.5">
-                Hourly count across all online cameras
+                Day wise count across all online cameras
               </div>
             </div>
           </div>
-          
-          <div className="flex-1 flex items-end gap-1.5 p-4 pt-5 min-h-[250px]">
+
+          <div className="flex items-end gap-1.5 p-4 pt-5 min-h-[220px]">
             {bars.map((h, idx) => (
               <div
                 key={idx}
@@ -186,26 +99,71 @@ export default function OperatorDashboard() {
             <span>NOW</span>
           </div>
         </div>
+
+        {/* RE-ID CONFIDENCE DONUT CHART */}
+        <div className="bg-white border border-[#E4EAF2] rounded-xl flex flex-col overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[#EEF2F8]">
+            <div className="font-display text-sm font-semibold text-[#0D2440] flex items-center gap-2">
+              <Scan className="w-4 h-4 stroke-[#2E5E99] stroke-[1.8] fill-none" />
+              Re-ID Confidence Distribution
+            </div>
+            <div className="text-xs text-[#93A2B8] mt-0.5">
+              Match confidence across all Re-ID results
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 p-5 flex-1">
+            <div className="w-[150px] h-[150px] shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={reidConfidence}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={48}
+                    outerRadius={74}
+                    paddingAngle={2}
+                    strokeWidth={0}
+                  >
+                    {reidConfidence.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {reidConfidence.map((entry) => (
+                <div key={entry.name} className="flex items-start gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full mt-1 shrink-0"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <div>
+                    <div className="text-[12px] font-medium text-[#4B617D]">
+                      {entry.name}
+                    </div>
+                    <div className="text-[13px] font-bold text-[#0D2440]">
+                      {entry.value}% <span className="text-[#93A2B8] font-normal text-[11px]">({entry.count})</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* TABLE PANEL */}
       <section className="bg-white border border-[#E4EAF2] rounded-xl overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between p-4 border-b border-[#EEF2F8]">
-          <div>
-            <div className="font-display text-sm font-semibold text-[#0D2440]">
-              Recent Vehicle Sightings
-            </div>
-            <div className="text-xs text-[#93A2B8] mt-0.5">
-              Live detection feed across surveillance cameras
-            </div>
+        <div className="p-4 border-b border-[#EEF2F8]">
+          <div className="font-display text-sm font-semibold text-[#0D2440]">
+            Recent Vehicle Sightings
           </div>
-          <Link
-            to="/operator/reid-review"
-            className="flex items-center gap-1.5 bg-[#0D2440] hover:bg-[#2E5E99] text-white rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors no-underline"
-          >
-            <RefreshCcw className="w-3.5 h-3.5 stroke-white stroke-2 fill-none" />
-            Run Re-ID Search
-          </Link>
+          <div className="text-xs text-[#93A2B8] mt-0.5">
+            Detected and re-identified vehicles across surveillance cameras
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -219,7 +177,6 @@ export default function OperatorDashboard() {
                 <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Camera</th>
                 <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Timestamp</th>
                 <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Re-ID Conf.</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EEF2F8] text-xs text-[#4B617D]">
@@ -241,11 +198,6 @@ export default function OperatorDashboard() {
                   <td className="px-4 py-3">
                     <span className={`font-mono font-semibold text-[11.5px] px-2 py-0.5 rounded ${row.confClass}`}>
                       {row.confidence}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-[#2E5E99] text-xs font-semibold cursor-pointer hover:underline">
-                      View
                     </span>
                   </td>
                 </tr>
