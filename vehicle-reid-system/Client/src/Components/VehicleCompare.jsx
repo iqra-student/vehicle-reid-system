@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 
 // --- SVG Icons ---
-const CameraIcon = () => (
-  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
 const UploadIcon = () => (
   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -40,7 +33,7 @@ const XIcon = () => (
 
 // --- Sub-components ---
 const UploadTile = ({ label, inputId, preview, isVideo, onFileChange }) => (
-  <div className="border-2 border-dashed border-[#2E5E99]/30 hover:border-[#2E5E99] bg-[#E7F0FA]/40 rounded-xl p-6 text-center transition-all flex flex-col items-center justify-center min-h-[210px] group cursor-pointer">
+  <div className="border-2 border-dashed border-[#2E5E99]/30 hover:border-[#2E5E99] bg-[#E7F0FA]/40 rounded-xl p-6 text-center transition-all flex flex-col items-center justify-center min-h-[280px] group cursor-pointer">
     <input
       type="file"
       accept={isVideo ? "video/mp4,video/avi,video/quicktime" : "image/*"}
@@ -51,9 +44,9 @@ const UploadTile = ({ label, inputId, preview, isVideo, onFileChange }) => (
     {preview ? (
       <div className="relative w-full">
         {isVideo ? (
-          <video src={preview} controls className="w-full h-36 object-cover rounded-lg border border-[#2E5E99]/30" />
+          <video src={preview} controls className="w-full h-56 object-cover rounded-lg border border-[#2E5E99]/30" />
         ) : (
-          <img src={preview} alt={label} className="w-full h-36 object-cover rounded-lg border border-[#2E5E99]/30" />
+          <img src={preview} alt={label} className="w-full h-56 object-cover rounded-lg border border-[#2E5E99]/30" />
         )}
         <label
           htmlFor={inputId}
@@ -79,13 +72,6 @@ const UploadTile = ({ label, inputId, preview, isVideo, onFileChange }) => (
   </div>
 );
 
-const SpecBox = ({ label, value }) => (
-  <div className="bg-[#E7F0FA] p-3.5 rounded-xl border border-[#2E5E99]/10">
-    <span className="text-[10px] text-[#4B617D] uppercase font-bold tracking-wider block">{label}</span>
-    <span className="text-[#0D2440] font-black text-xs mt-1 block font-mono">{value}</span>
-  </div>
-);
-
 const ResultTile = ({ title, value, subtext }) => (
   <div className="bg-[#E7F0FA] p-4 rounded-xl text-center border border-[#2E5E99]/10">
     <span className="text-[10px] text-[#4B617D] uppercase font-bold tracking-wider block">{title}</span>
@@ -94,7 +80,6 @@ const ResultTile = ({ title, value, subtext }) => (
   </div>
 );
 
-// Confidence tier badge - "high" vs "possible", no more binary pass/fail
 const TierBadge = ({ tier }) => {
   const styles = {
     high: 'bg-emerald-100 text-emerald-700',
@@ -113,7 +98,6 @@ const TierBadge = ({ tier }) => {
   );
 };
 
-// Color is advisory only now - never "FAIL", just an info tag
 const ColorConsistencyTag = ({ consistent }) => (
   <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${
     consistent ? 'bg-emerald-100 text-emerald-700' : 'bg-[#E7F0FA] text-[#4B617D]'
@@ -122,7 +106,6 @@ const ColorConsistencyTag = ({ consistent }) => (
   </span>
 );
 
-// Time gap still IS a hard filter on the backend, so pass/fail is accurate here
 const PassFailBadge = ({ passed }) => (
   <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${
     passed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
@@ -163,7 +146,6 @@ export default function VehicleReIDEngine() {
   const [videoResult, setVideoResult] = useState(null);
   const [debugResult, setDebugResult] = useState(null);
   const [threshold, setThreshold] = useState(0.78);
-  // operator review state: { [match_id]: 'confirmed' | 'rejected' }
   const [matchDecisions, setMatchDecisions] = useState({});
 
   const handleFileChange = (e, fileNumber) => {
@@ -287,9 +269,6 @@ export default function VehicleReIDEngine() {
     setDebugLoading(false);
   };
 
-  // Operator review actions (Module 2.6) - just local UI state for now, since
-  // there's no backend endpoint yet to persist a verified/rejected decision.
-  // Wired up so the buttons actually respond instead of doing nothing.
   const handleConfirmMatch = (matchId) => {
     setMatchDecisions((prev) => ({ ...prev, [matchId]: 'confirmed' }));
   };
@@ -301,143 +280,40 @@ export default function VehicleReIDEngine() {
   const isDisabled = loading || debugLoading || !file1 || !file2;
 
   return (
-    <div className="min-h-screen bg-[#E7F0FA] p-8 space-y-6 text-[#0D2440] font-sans antialiased">
-      {/* Header */}
-      <header className="bg-white rounded-2xl p-5 border border-[#2E5E99]/10 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-[#0D2440] rounded-xl shadow-sm">
-            <CameraIcon />
-          </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-[#0D2440]">
-              Vehicle Re-Identification Engine (Module 2)
-            </h1>
-            <p className="text-xs text-[#4B617D] mt-0.5 font-medium">
-              Deep Feature Extraction & Cross-Camera Automated Verification
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 bg-[#E7F0FA] p-1.5 rounded-xl border border-[#2E5E99]/20">
-          {['video', 'image'].map((m) => (
-            <button
-              key={m}
-              onClick={() => switchMode(m)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all ${
-                mode === m ? 'bg-[#0D2440] text-white shadow-sm' : 'text-[#0D2440] hover:bg-white/50'
-              }`}
-            >
-              {m === 'video' ? '2-Camera Video Mode' : 'Single Crop Mode'}
-            </button>
-          ))}
-        </div>
-      </header>
-
+    <div className="space-y-6 text-[#0D2440] font-sans antialiased">
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Upload Section */}
-        <section className="lg:col-span-7 bg-white border border-[#2E5E99]/10 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-5 border-b border-[#E7F0FA] pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-[#0D2440] flex items-center gap-2">
-                  <PulseIcon />
-                  {mode === 'video' ? 'Dual Surveillance Video Input' : 'Query Vehicle Crop Pair'}
-                </h2>
-                <p className="text-xs text-[#4B617D] mt-0.5">
-                  {mode === 'video' ? 'Upload 2 surveillance feeds for automated cross-matching' : 'Upload 2 cropped vehicle images'}
-                </p>
+      <section className="bg-white border border-[#2E5E99]/10 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-6">
+        <div>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-5 border-b border-[#E7F0FA] pb-3 gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-[#0D2440] flex items-center gap-2">
+                <PulseIcon />
+                {mode === 'video' ? 'Dual Video Input' : 'Cropped Vehicles Pair'}
+              </h2>
+              <p className="text-xs text-[#4B617D] mt-0.5">
+                {mode === 'video' ? 'Upload 2 surveillance feeds for automated cross-matching' : 'Upload 2 cropped vehicle images'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <div className="flex items-center gap-1.5 bg-[#E7F0FA] p-1.5 rounded-xl border border-[#2E5E99]/20">
+                {['video', 'image'].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => switchMode(m)}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold font-mono transition-all whitespace-nowrap ${
+                      mode === m ? 'bg-[#0D2440] text-white shadow-sm' : 'text-[#0D2440] hover:bg-white/50'
+                    }`}
+                  >
+                    {m === 'video' ? '2-Cam Video' : 'Single Crop'}
+                  </button>
+                ))}
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <UploadTile
-                label={mode === 'video' ? "Upload Cam 1 Feed (.mp4)" : "Upload Vehicle Image A"}
-                inputId="file1-input"
-                preview={preview1}
-                isVideo={mode === 'video'}
-                onFileChange={(e) => handleFileChange(e, 1)}
-              />
-              <UploadTile
-                label={mode === 'video' ? "Upload Cam 2 Feed (.mp4)" : "Upload Vehicle Image B"}
-                inputId="file2-input"
-                preview={preview2}
-                isVideo={mode === 'video'}
-                onFileChange={(e) => handleFileChange(e, 2)}
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              onClick={handleCompare}
-              disabled={isDisabled}
-              className={`flex-1 py-3 px-5 rounded-xl font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 ${
-                isDisabled
-                  ? 'bg-[#E7F0FA] text-[#4B617D]/50 cursor-not-allowed border border-[#2E5E99]/10'
-                  : 'bg-[#E7F0FA] hover:bg-[#0D2440] text-[#0D2440] hover:text-white border border-[#2E5E99]/20 shadow-xs'
-              }`}
-            >
-              {loading ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-[#0D2440] border-t-transparent rounded-full animate-spin"></span>
-                  Scanning Frames & Extracting OSNet Features...
-                </>
-              ) : (
-                'RUN MODULE 2 RE-ID COMPARISON'
-              )}
-            </button>
-
-            {mode === 'video' && (
-              <button
-                onClick={handleDebugCompare}
-                disabled={isDisabled}
-                title="Shows every extracted crop plus the full similarity/time/color breakdown for every pair."
-                className={`py-3 px-5 rounded-xl font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 border ${
-                  isDisabled
-                    ? 'bg-white text-[#4B617D]/50 cursor-not-allowed border-[#2E5E99]/10'
-                    : 'bg-white hover:bg-amber-500 text-amber-600 hover:text-white border-amber-400/50'
-                }`}
-              >
-                {debugLoading ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></span>
-                    Inspecting...
-                  </>
-                ) : (
-                  <>
-                    <BugIcon />
-                    DEBUG INSPECT
-                  </>
-                )}
-              </button>
-            )}
-
-            <button
-              onClick={handleReset}
-              className="py-3 px-5 rounded-xl font-bold text-xs bg-[#E7F0FA] hover:bg-[#0D2440] text-[#0D2440] hover:text-white transition-colors border border-[#2E5E99]/20"
-            >
-              Reset
-            </button>
-          </div>
-        </section>
-
-        {/* Configuration Panel */}
-        <section className="lg:col-span-5 bg-white border border-[#2E5E99]/10 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-5 border-b border-[#E7F0FA] pb-3">
-              <h2 className="text-sm font-bold text-[#0D2440]">Module 2 Configuration</h2>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="bg-[#E7F0FA] p-4 rounded-xl border border-[#2E5E99]/10 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[#0D2440] font-bold text-[11px] tracking-wider uppercase">MATCH THRESHOLD</span>
-                  <span className="bg-[#0D2440] text-white font-mono font-bold text-xs px-2.5 py-1 rounded-md">
-                    {(threshold * 100).toFixed(0)}%
-                  </span>
-                </div>
+              <div className="flex items-center gap-3 bg-[#E7F0FA] px-4 py-2 rounded-xl border border-[#2E5E99]/10">
+                <span className="text-[10px] font-bold text-[#4B617D] uppercase tracking-wider whitespace-nowrap">
+                  Match Threshold
+                </span>
                 <input
                   type="range"
                   min="0.50"
@@ -445,30 +321,87 @@ export default function VehicleReIDEngine() {
                   step="0.01"
                   value={threshold}
                   onChange={(e) => setThreshold(parseFloat(e.target.value))}
-                  className="w-full accent-[#0D2440] bg-[#2E5E99]/20 rounded h-1.5 cursor-pointer"
+                  className="w-28 accent-[#0D2440] cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-[#4B617D] font-mono font-medium">
-                  <span>50% (Loose)</span>
-                  <span className="text-[#0D2440] underline font-bold">78% (Balanced)</span>
-                  <span>95% (Exact)</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <SpecBox label="Detector" value="YOLOv8 (2.1)" />
-                <SpecBox label="Tracking Strategy" value="Every 4th Frame (2.2)" />
-                <SpecBox label="Image Prep" value="Gaussian Denoise (2.3)" />
-                <SpecBox label="Feature Extractor" value="OSNet 512-d (2.4)" />
+                <span className="bg-[#0D2440] text-white font-mono font-bold text-xs px-2.5 py-1 rounded-md min-w-[44px] text-center">
+                  {(threshold * 100).toFixed(0)}%
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="text-[11px] text-[#4B617D] font-mono border-t border-[#E7F0FA] pt-3 flex justify-between">
-            <span>Evaluation: `F.cosine_similarity`</span>
-            <span className="text-[#0D2440] font-bold">OSNet-x1-0</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <UploadTile
+              label={mode === 'video' ? "Upload Cam 1 Feed (.mp4)" : "Upload Vehicle Image A"}
+              inputId="file1-input"
+              preview={preview1}
+              isVideo={mode === 'video'}
+              onFileChange={(e) => handleFileChange(e, 1)}
+            />
+            <UploadTile
+              label={mode === 'video' ? "Upload Cam 2 Feed (.mp4)" : "Upload Vehicle Image B"}
+              inputId="file2-input"
+              preview={preview2}
+              isVideo={mode === 'video'}
+              onFileChange={(e) => handleFileChange(e, 2)}
+            />
           </div>
-        </section>
-      </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button
+            onClick={handleCompare}
+            disabled={isDisabled}
+            className={`flex-1 py-3 px-5 rounded-xl font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 ${
+              isDisabled
+                ? 'bg-[#E7F0FA] text-[#4B617D]/50 cursor-not-allowed border border-[#2E5E99]/10'
+                : 'bg-[#E7F0FA] hover:bg-[#0D2440] text-[#0D2440] hover:text-white border border-[#2E5E99]/20 shadow-xs'
+            }`}
+          >
+            {loading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-[#0D2440] border-t-transparent rounded-full animate-spin"></span>
+                Scanning Frames & Extracting Features...
+              </>
+            ) : (
+              'RUN RE-ID '
+            )}
+          </button>
+
+          {mode === 'video' && (
+            <button
+              onClick={handleDebugCompare}
+              disabled={isDisabled}
+              title="Shows every extracted crop plus the full similarity/time/color breakdown for every pair."
+              className={`py-3 px-5 rounded-xl font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 border ${
+                isDisabled
+                  ? 'bg-white text-[#4B617D]/50 cursor-not-allowed border-[#2E5E99]/10'
+                  : 'bg-white hover:bg-amber-500 text-amber-600 hover:text-white border-amber-400/50'
+              }`}
+            >
+              {debugLoading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></span>
+                  Inspecting...
+                </>
+              ) : (
+                <>
+                  <BugIcon />
+                  DEBUG INSPECT
+                </>
+              )}
+            </button>
+          )}
+
+          <button
+            onClick={handleReset}
+            className="py-3 px-5 rounded-xl font-bold text-xs bg-[#E7F0FA] hover:bg-[#0D2440] text-[#0D2440] hover:text-white transition-colors border border-[#2E5E99]/20"
+          >
+            Reset
+          </button>
+        </div>
+      </section>
 
       {/* Video Mode Results */}
       {videoResult && (
@@ -597,6 +530,7 @@ export default function VehicleReIDEngine() {
         </section>
       )}
 
+      
       {/* Debug Results Panel */}
       {debugResult && (
         <section className="bg-white border border-amber-400/40 rounded-2xl p-6 shadow-xs space-y-5">

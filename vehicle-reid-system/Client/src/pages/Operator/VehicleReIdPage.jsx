@@ -90,7 +90,7 @@ export default function VehicleReIdPage() {
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-[#3AB0FF]" />
-            Vehicle Re-Identification (Re-ID)
+            Vehicle Re-Identification 
           </h1>
           <p className="text-xs text-slate-300 mt-0.5">
             Query target vehicle feature vectors across multi-camera streams

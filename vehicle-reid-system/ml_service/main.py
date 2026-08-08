@@ -30,8 +30,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 device_type = "cuda" if torch.cuda.is_available() else "cpu"
 
 extractor = FeatureExtractor(
-    model_name="osnet_x1_0",
-    model_path="weights/model.pth",
+    model_name="resnet50",
+    model_path="weights/model_final.pth",
     device=device_type
 )
 

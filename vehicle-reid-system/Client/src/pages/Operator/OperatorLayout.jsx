@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-// Import your VSMS logo from assets
-import vsmsLogo from "../../assets/vsms-logo.png"; 
 import {
   LayoutDashboard,
   Video,
@@ -18,21 +16,27 @@ import {
   BarChart2,
 } from "lucide-react";
 
+const VsmsLogoMark = ({ className = "h-8 w-8" }) => (
+  <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="url(#vsmsGrad)" />
+    <circle cx="14" cy="16" r="7" stroke="white" strokeWidth="2" />
+    <circle cx="14" cy="16" r="2.3" fill="white" />
+    <circle cx="25" cy="8" r="1.6" fill="#7BA4D0" />
+    <circle cx="21" cy="11" r="1.2" fill="#7BA4D0" opacity="0.7" />
+    <circle cx="18" cy="13.5" r="0.9" fill="#7BA4D0" opacity="0.4" />
+    <defs>
+      <linearGradient id="vsmsGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#2E5E99" />
+        <stop offset="1" stopColor="#0D2440" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
 export default function OperatorLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [clock, setClock] = useState("—");
-
-  useEffect(() => {
-    const tick = () => {
-      const d = new Date();
-      setClock(d.toTimeString().slice(0, 8) + " UTC+5");
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -53,24 +57,23 @@ export default function OperatorLayout() {
     { name: "Reports & Analytics", path: "/operator/reports", icon: BarChart2 },
   ];
 
+  const currentPage = navItems.find((item) => item.path === location.pathname);
+  const pageTitle = currentPage ? currentPage.name : "Dashboard";
+
   return (
     <div className="min-h-screen bg-[#F5F8FC] text-[#0D2440] font-sans antialiased">
       <div className="grid grid-cols-[242px_1fr] min-h-screen">
         
         {/* SIDEBAR */}
         <aside className="bg-[#0C1A2B] flex flex-col py-5 px-0 shadow-md">
-          {/* Brand Header */}
           <div className="flex items-center gap-2.5 px-4 pb-5 border-b border-[#7BA4D0]/15 mb-1.5 min-w-0">
-            <div className="flex items-center justify-center shrink-0">
-             <img 
-  src={vsmsLogo} 
-  alt="VSMS Logo" 
-  className="h-5 w-auto object-contain invert mix-blend-screen" 
-/>
-            </div>
+            <VsmsLogoMark className="h-8 w-8 shrink-0" />
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-[12.5px] tracking-wider text-white leading-tight whitespace-nowrap">
-                OPERATOR PORTAL
+              <span className="font-bold text-[13.5px] tracking-wider text-white leading-tight whitespace-nowrap">
+                CityTrace
+              </span>
+              <span className="text-[9px] font-mono tracking-widest text-[#6C87A6] uppercase leading-tight">
+                Operator Portal
               </span>
             </div>
           </div>
@@ -79,7 +82,6 @@ export default function OperatorLayout() {
             Operations
           </div>
 
-          {/* Navigation */}
           <nav className="flex flex-col gap-0.5 px-3">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -104,7 +106,6 @@ export default function OperatorLayout() {
             })}
           </nav>
 
-          {/* Sidebar Footer */}
           <div className="mt-auto pt-3.5 px-4 border-t border-[#7BA4D0]/15">
             <div className="flex items-center gap-2.5 py-1.5 pb-3">
               <div className="w-8 h-8 rounded-full bg-[#2E5E99] border border-[#7BA4D0]/20 flex items-center justify-center text-xs font-bold text-white shrink-0">
@@ -134,28 +135,33 @@ export default function OperatorLayout() {
 
         {/* MAIN CONTENT AREA */}
         <div className="flex flex-col min-w-0 overflow-hidden">
-          <div className="px-[26px] pt-5">
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white border border-[#E4EAF2] shadow-sm">
-              <div className="flex items-center gap-2.5 text-[12.5px] font-medium text-[#4B617D]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2E5E99] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2E5E99]"></span>
-                </span>
-                System Online &amp; Monitoring Active
-              </div>
-              <div className="flex items-center gap-3.5">
-                <span className="font-mono text-[10.5px] text-[#93A2B8] tracking-wide">
-                  {clock}
-                </span>
-                <button className="w-7 h-7 rounded-lg bg-[#E7F0FA] flex items-center justify-center text-[#2E5E99] relative">
-                  <Bell className="w-3.5 h-3.5 stroke-[#2E5E99] stroke-[1.8]" />
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#B25C50]"></span>
-                </button>
-              </div>
-            </div>
-          </div>
+         
+{/* TOP BAR */}
+<div className="flex items-center justify-between px-[26px] pt-6 pb-4">
+  <h1 className="text-3xl font-bold text-[#0D2440]">{pageTitle}</h1>
 
-          <main className="p-[20px_26px_34px] flex flex-col gap-4 overflow-y-auto">
+  <div className="flex items-center gap-4">
+    <button className="w-9 h-9 rounded-lg bg-white border border-[#E4EAF2] flex items-center justify-center text-[#4B617D] hover:bg-[#F5F8FC] transition-colors">
+      <Bell className="w-4 h-4 stroke-[#4B617D] stroke-[1.8]" />
+    </button>
+
+    <div className="flex items-center gap-2.5">
+      <div className="w-9 h-9 rounded-full bg-[#2E5E99] flex items-center justify-center text-sm font-bold text-white shrink-0">
+        {(user?.name || "O").charAt(0).toUpperCase()}
+      </div>
+      <div className="hidden sm:block">
+        <div className="text-[13px] font-semibold text-[#0D2440] leading-tight">
+          {user?.name || "Operator"}
+        </div>
+        <div className="text-[11px] text-[#93A2B8] leading-tight">
+          Operator
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+          <main className="p-[10px_26px_34px] flex flex-col gap-4 overflow-y-auto">
             <Outlet />
           </main>
         </div>
