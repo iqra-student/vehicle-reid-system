@@ -14,6 +14,44 @@ from ultralytics import YOLO
 # Import CongestionEngine from Module 4
 from congestion_engine import CongestionEngine
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "clip_reid"))
+from model.make_model import make_model
+from config import cfg_base as cfg
+from torchvision import transforms
+from PIL import Image
+from pair_classifier import PairClassifier
+
+device_type = "cpu"
+
+cfg.merge_from_file(os.path.join(os.path.dirname(__file__), "clip_reid", "configs", "veri", "vit_base.yml"))
+cfg.freeze()
+
+clip_model = make_model(cfg, num_class=576, camera_num=20, view_num=8)
+clip_model.load_state_dict(torch.load("weights/ViT-B-16_60.pth", map_location=device_type))
+clip_model.to(device_type)
+clip_model.eval()
+
+gallery_data = np.load("gallery_embeddings.npz")
+gallery_embeddings = gallery_data["embeddings"]
+gallery_filenames = gallery_data["filenames"]
+
+classifier = PairClassifier(input_dim=1280)
+classifier.load_state_dict(torch.load("weights/pair_classifier_full.pth", map_location=device_type))
+classifier.to(device_type)
+classifier.eval()
+
+clip_transform = transforms.Compose([
+    transforms.Resize((256, 256)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+])
+
+def extract_clip_embedding(img_path):
+    img = Image.open(img_path).convert("RGB")
+    img_t = clip_transform(img).unsqueeze(0).to(device_type)
+    with torch.no_grad():
+        feat = clip_model(img_t)
+    return feat.cpu().numpy()[0]  # 1280-dim
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "deep-person-reid"))
 from torchreid.utils import FeatureExtractor
 
@@ -349,6 +387,21 @@ def hungarian_match(cam1_detections, cam2_detections):
             })
     return matches
 
+app = FastAPI(title="Vehicle Re-ID Engine - Module 2")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+os.makedirs("static/matches", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static/gallery", StaticFiles(directory=r"C:\Users\tayya\Documents\FYP\archive (1)\VeRi\image_test"), name="gallery")
+app.mount("/gallery", StaticFiles(directory=r"C:\Users\tayya\Documents\FYP\archive (1)\VeRi\image_test"), name="gallery")
+
 # ----------------- MODULE 4 ENDPOINTS -----------------
 @app.post("/detect-congestion")
 async def detect_congestion_endpoint(
@@ -516,37 +569,55 @@ async def compare_video_streams(video1: UploadFile = File(...), video2: UploadFi
             if os.path.exists(temp_f):
                 os.remove(temp_f)
 
-@app.post("/compare")
-async def compare_vehicles(file1: UploadFile = File(...), file2: UploadFile = File(...)):
-    invalid_exts = ('.mp4', '.avi', '.mov', '.mkv')
-    if file1.filename.endswith(invalid_exts) or file2.filename.endswith(invalid_exts):
-        raise HTTPException(
-            status_code=400,
-            detail="The /compare endpoint only accepts image files. Use /compare-video-streams for videos."
-        )
+import re
 
-    path1, path2 = f"temp_1_{file1.filename}", f"temp_2_{file2.filename}"
-    with open(path1, "wb") as b1:
-        shutil.copyfileobj(file1.file, b1)
-    with open(path2, "wb") as b2:
-        shutil.copyfileobj(file2.file, b2)
+def parse_camera_id(filename):
+    match = re.search(r'_c(\d+)_', filename)
+    return match.group(1) if match else None
+
+@app.post("/find-match")
+async def find_match(file: UploadFile = File(...), exclude_same_camera: bool = Form(True)):
+    path = f"temp_query_{file.filename}"
+    with open(path, "wb") as b:
+        shutil.copyfileobj(file.file, b)
 
     try:
-        f1, f2 = extractor(path1), extractor(path2)
-        score = max(0.0, float(F.cosine_similarity(f1, f2).item()))
-        tier = confidence_tier(score)
+        query_emb = extract_clip_embedding(path)
+        HALF = len(query_emb) // 2
+        query_cam = parse_camera_id(file.filename)
+
+        results = []
+        for i, gal_emb in enumerate(gallery_embeddings):
+            gal_filename = str(gallery_filenames[i])
+            if exclude_same_camera and query_cam is not None:
+                gal_cam = parse_camera_id(gal_filename)
+                if gal_cam == query_cam:
+                    continue
+
+            combined = np.concatenate([query_emb[:HALF], gal_emb[HALF:]]).astype(np.float32)
+            combined_t = torch.tensor(combined).unsqueeze(0).to(device_type)
+            with torch.no_grad():
+                logit = classifier(combined_t)
+                prob = torch.sigmoid(logit).item()
+            results.append((prob, gal_filename))
+
+        results.sort(key=lambda x: x[0], reverse=True)
+        top_matches = results[:3]
+
         return {
             "status": "success",
-            "similarity": round(score, 4),
-            "similarityPercentage": f"{round(score * 100, 2)}%",
-            "confidence_tier": tier,
-            "sameVehicle": tier == "high"
+            "matches": [
+                {
+                    "matched_filename": fname,
+                    "confidence": round(score, 4),
+                    "confidencePercentage": f"{round(score * 100, 2)}%"
+                }
+                for score, fname in top_matches
+            ]
         }
     finally:
-        for p in [path1, path2]:
-            if os.path.exists(p):
-                os.remove(p)
-
+        if os.path.exists(path):
+            os.remove(path)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

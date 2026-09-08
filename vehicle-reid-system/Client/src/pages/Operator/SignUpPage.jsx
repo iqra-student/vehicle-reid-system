@@ -10,6 +10,25 @@ const STEEL = "#7BA4D0";
 const DEEP = "#0C1A2B";
 const CORAL = "#B25C50";
 
+
+const VsmsLogoMark = ({ className = "h-8 w-8" }) => (
+  <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="url(#vsmsGrad)" />
+    <circle cx="14" cy="16" r="7" stroke="white" strokeWidth="2" />
+    <circle cx="14" cy="16" r="2.3" fill="white" />
+    <circle cx="25" cy="8" r="1.6" fill="#7BA4D0" />
+    <circle cx="21" cy="11" r="1.2" fill="#7BA4D0" opacity="0.7" />
+    <circle cx="18" cy="13.5" r="0.9" fill="#7BA4D0" opacity="0.4" />
+    <defs>
+      <linearGradient id="vsmsGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#2E5E99" />
+        <stop offset="1" stopColor="#0D2440" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+
 export default function SignUpPage() {
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +71,7 @@ export default function SignUpPage() {
     }
   };
 
-  const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#FAFCFE", color: INK };
+const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", color: INK };
   const onFieldFocus = (e) => {
     e.target.style.boxShadow = `0 0 0 3px ${SAPPHIRE}22`;
     e.target.style.borderColor = STEEL;
@@ -63,31 +82,29 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
-      {/* Left panel: form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-12 sm:px-10">
+<div className="h-screen w-full flex flex-col md:flex-row bg-white overflow-hidden">      {/* Left panel: form */}
+      <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-6 sm:px-10 overflow-y-auto">
         <div className="w-full max-w-sm">
-          <div className="flex items-center gap-2.5 mb-10">
-            <img src={vsmsLogo} alt="VSMS" className="h-6 w-auto" />
-            <span
+          <div className="flex items-center gap-2.5 mb-6">
+<VsmsLogoMark className="h-8 w-8" />            <span
               className="text-[11px] tracking-[0.2em] uppercase font-mono pl-2.5"
               style={{ color: STEEL, borderLeft: "1px solid #E4EAF2" }}
             >
-              Smart City
+               City Trace
             </span>
           </div>
 
-          <h1 className="text-2xl font-semibold mb-1" style={{ color: INK }}>
+          <h1 className="text-xl font-semibold mb-1" style={{ color: INK }}>
             Create an operator account
           </h1>
-          <p className="text-sm mb-8" style={{ color: "#4B617D" }}>
+          <p className="text-sm mb-5" style={{ color: "#4B617D" }}>
             Already have an account?{" "}
             <Link to="/signin" className="font-semibold underline underline-offset-2" style={{ color: SAPPHIRE }}>
               Sign in
             </Link>
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-3" noValidate>
             <div>
               <label htmlFor="name" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
                 Full name
@@ -99,7 +116,7 @@ export default function SignUpPage() {
                 placeholder="Jane Operator"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg px-3.5 py-2.5 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
+                className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
                 style={fieldStyle}
                 onFocus={onFieldFocus}
                 onBlur={onFieldBlur}
@@ -108,7 +125,7 @@ export default function SignUpPage() {
 
             <div>
               <label htmlFor="email" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
-                Operator ID / e-mail
+                E-mail
               </label>
               <input
                 id="email"
@@ -117,7 +134,7 @@ export default function SignUpPage() {
                 placeholder="unit.operator@city.gov"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg px-3.5 py-2.5 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
+                className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
                 style={fieldStyle}
                 onFocus={onFieldFocus}
                 onBlur={onFieldBlur}
@@ -135,7 +152,7 @@ export default function SignUpPage() {
                 placeholder="••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg px-3.5 py-2.5 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
+                className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
                 style={fieldStyle}
                 onFocus={onFieldFocus}
                 onBlur={onFieldBlur}
@@ -153,7 +170,7 @@ export default function SignUpPage() {
                 placeholder="••••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg px-3.5 py-2.5 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
+                className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
                 style={fieldStyle}
                 onFocus={onFieldFocus}
                 onBlur={onFieldBlur}
@@ -178,7 +195,7 @@ export default function SignUpPage() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-[11px]" style={{ color: "#93A2B8" }}>
+          <p className="mt-5 text-center text-[11px]" style={{ color: "#93A2B8" }}>
             New accounts are provisioned with operator access only.
             Camera registrations require admin approval before going live.
           </p>
