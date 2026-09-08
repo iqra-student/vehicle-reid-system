@@ -1,20 +1,28 @@
 import os
 import sys
-import shutil
 import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+import traceback
+import tempfile
 from scipy.optimize import linear_sum_assignment
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from ultralytics import YOLO
 
+# Import plate reader module
+from anpr import read_plate
+
+# Import torchreid from deep-person-reid
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "deep-person-reid"))
 from torchreid.utils import FeatureExtractor
 
-app = FastAPI(title="Vehicle Re-ID Engine - Module 2")
+app = FastAPI(title="Vehicle Re-ID & ANPR Engine - Memory Only")
+
+# All routes live under /api to match the frontend's axiosInstance baseURL
+api_router = APIRouter(prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,11 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-os.makedirs("static/matches", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 device_type = "cuda" if torch.cuda.is_available() else "cpu"
 
+# NOTE: this extractor (ResNet50 ReID backbone) is used by Module 2
+# (/compare, /compare-video-streams) for cross-camera similarity matching.
 extractor = FeatureExtractor(
     model_name="resnet50",
     model_path="weights/model_final.pth",
@@ -38,7 +45,7 @@ extractor = FeatureExtractor(
 yolo_model = YOLO("yolov8n.pt")
 VEHICLE_CLASSES = [2, 3, 5, 7]  # Car, Motorcycle, Bus, Truck
 
-# ---- Candidate filtering knobs (Module 2.5) ----
+# ---- Candidate filtering knobs ----
 MAX_TIME_GAP_SEC = 180.0
 MIN_TIME_GAP_SEC = -180.0
 COLOR_ADVISORY_MAX = 0.60
@@ -50,6 +57,21 @@ MAX_MISSED_FRAMES = 8
 MIN_TRACK_HITS = 2
 MIN_SHARPNESS = 8.0
 MIN_BOX_AREA = 4000
+
+# Used when pad_crop=True is explicitly passed into process_video_bytes.
+# Callers that never pass it get byte-for-byte identical crops as before.
+#
+# YOLO vehicle boxes are often tight against the car body and don't
+# reliably extend to the very edge of the bumper — which is usually
+# exactly where the plate sits. A small margin around the crop gives ANPR
+# a real shot at plates that would otherwise be clipped.
+CROP_PADDING_RATIO = 0.08
+
+# Detection is run on a downscaled copy of the frame. Boxes are mapped
+# back to full-res coordinates before cropping, so crop quality (for
+# OCR / ReID) is untouched — only the YOLO forward pass itself runs on a
+# smaller image.
+DETECTION_INPUT_MAX_DIM = 640
 
 
 def enhance_image(crop_img):
@@ -199,95 +221,145 @@ class VehicleTrack:
             self.best_crop = crop
 
 
-def process_video_stream(video_path: str, camera_id: str, sample_rate: int = 4):
-    cap = cv2.VideoCapture(video_path)
-    frame_count = 0
+def process_video_bytes(
+    video_bytes: bytes,
+    camera_id: str,
+    sample_rate: int = 4,
+    extract_features: bool = True,
+    pad_crop: bool = False,
+):
+    """Processes video frames via a temporary file for OpenCV VideoCapture compatibility.
 
-    active_tracks = []
-    finished_tracks = []
+    extract_features: when False, skips the ResNet50 ReID embedding and
+    color-histogram computation entirely.
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    pad_crop: when True, crops each vehicle with a small margin around the
+    tight YOLO box, since a plate right at the bumper edge otherwise gets
+    clipped. Defaults to False, so callers that never pass it get
+    byte-for-byte the same crops as before.
+    """
 
-        frame_count += 1
-        if frame_count % sample_rate != 0:
-            continue
+    temp_fd, temp_path = tempfile.mkstemp(suffix=".mp4")
+    try:
+        with os.fdopen(temp_fd, "wb") as temp_video:
+            temp_video.write(video_bytes)
+        # file handle is now fully closed — safe for cv2 to open on Windows
 
-        results = yolo_model(frame, verbose=False)[0]
-        timestamp = round(cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0, 2)
+        cap = cv2.VideoCapture(temp_path)
+        if not cap.isOpened():
+            raise ValueError("OpenCV failed to decode the provided video stream.")
 
-        detections = []
-        for box in results.boxes:
-            cls_id = int(box.cls[0].item())
-            confidence = float(box.conf[0].item())
+        frame_count = 0
+        active_tracks = []
+        finished_tracks = []
 
-            if cls_id in VEHICLE_CLASSES and confidence > 0.45:
-                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-                box_area = (x2 - x1) * (y2 - y1)
-                if box_area < MIN_BOX_AREA:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_count += 1
+            if frame_count % sample_rate != 0:
+                continue
+
+            # Run YOLO on a downscaled copy — full 4K frames make the CPU
+            # forward pass dramatically slower for no detection-quality
+            # benefit at this box size. Boxes are mapped back to full-res
+            # coordinates immediately after.
+            frame_h, frame_w = frame.shape[:2]
+            scale = DETECTION_INPUT_MAX_DIM / max(frame_h, frame_w)
+            detect_frame = cv2.resize(frame, None, fx=scale, fy=scale) if scale < 1.0 else frame
+
+            results = yolo_model(detect_frame, verbose=False)[0]
+            timestamp = round(cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0, 2)
+
+            detections = []
+            for box in results.boxes:
+                cls_id = int(box.cls[0].item())
+                confidence = float(box.conf[0].item())
+
+                if cls_id in VEHICLE_CLASSES and confidence > 0.45:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                    if scale < 1.0:
+                        x1, y1, x2, y2 = [int(v / scale) for v in (x1, y1, x2, y2)]
+
+                    box_area = (x2 - x1) * (y2 - y1)
+                    if box_area < MIN_BOX_AREA:
+                        continue
+
+                    if pad_crop:
+                        pad_x = int((x2 - x1) * CROP_PADDING_RATIO)
+                        pad_y = int((y2 - y1) * CROP_PADDING_RATIO)
+                        cx1 = max(0, x1 - pad_x)
+                        cy1 = max(0, y1 - pad_y)
+                        cx2 = min(frame_w, x2 + pad_x)
+                        cy2 = min(frame_h, y2 + pad_y)
+                    else:
+                        cx1, cy1, cx2, cy2 = x1, y1, x2, y2
+
+                    crop = frame[cy1:cy2, cx1:cx2]
+                    enhanced_crop = enhance_image(crop)
+                    detections.append({
+                        "bbox": [x1, y1, x2, y2],
+                        "confidence": confidence,
+                        "crop": enhanced_crop,
+                    })
+
+            unmatched_dets = list(range(len(detections)))
+            unmatched_tracks = list(range(len(active_tracks)))
+            pairs = []
+
+            for ti in unmatched_tracks:
+                for di in unmatched_dets:
+                    score = track_match_score(active_tracks[ti].last_bbox, detections[di]["bbox"])
+                    if score > 0.0:
+                        pairs.append((score, ti, di))
+            pairs.sort(key=lambda p: p[0], reverse=True)
+
+            all_boxes_this_frame = [tuple(d["bbox"]) for d in detections]
+
+            matched_t, matched_d = set(), set()
+            for score, ti, di in pairs:
+                if ti in matched_t or di in matched_d:
                     continue
-
-                crop = frame[y1:y2, x1:x2]
-                enhanced_crop = enhance_image(crop)
-                detections.append({
-                    "bbox": [x1, y1, x2, y2],
-                    "confidence": confidence,
-                    "crop": enhanced_crop,
-                })
-
-        unmatched_dets = list(range(len(detections)))
-        unmatched_tracks = list(range(len(active_tracks)))
-        pairs = []
-
-        for ti in unmatched_tracks:
-            for di in unmatched_dets:
-                score = track_match_score(active_tracks[ti].last_bbox, detections[di]["bbox"])
-                if score > 0.0:
-                    pairs.append((score, ti, di))
-        pairs.sort(key=lambda p: p[0], reverse=True)
-
-        all_boxes_this_frame = [tuple(d["bbox"]) for d in detections]
-
-        matched_t, matched_d = set(), set()
-        for score, ti, di in pairs:
-            if ti in matched_t or di in matched_d:
-                continue
-            matched_t.add(ti)
-            matched_d.add(di)
-            det = detections[di]
-            other_boxes = [b for b in all_boxes_this_frame if b != tuple(det["bbox"])]
-            active_tracks[ti].update(
-                det["bbox"], frame_count, timestamp, det["confidence"], det["crop"],
-                frame.shape, other_boxes
-            )
-
-        still_active = []
-        for ti, track in enumerate(active_tracks):
-            if ti in matched_t:
-                still_active.append(track)
-                continue
-            track.missed_frames += 1
-            if track.missed_frames > MAX_MISSED_FRAMES:
-                track.active = False
-                finished_tracks.append(track)
-            else:
-                still_active.append(track)
-        active_tracks = still_active
-
-        for di, det in enumerate(detections):
-            if di in matched_d:
-                continue
-            other_boxes = [b for b in all_boxes_this_frame if b != tuple(det["bbox"])]
-            active_tracks.append(
-                VehicleTrack(
+                matched_t.add(ti)
+                matched_d.add(di)
+                det = detections[di]
+                other_boxes = [b for b in all_boxes_this_frame if b != tuple(det["bbox"])]
+                active_tracks[ti].update(
                     det["bbox"], frame_count, timestamp, det["confidence"], det["crop"],
                     frame.shape, other_boxes
                 )
-            )
 
-    cap.release()
+            still_active = []
+            for ti, track in enumerate(active_tracks):
+                if ti in matched_t:
+                    still_active.append(track)
+                    continue
+                track.missed_frames += 1
+                if track.missed_frames > MAX_MISSED_FRAMES:
+                    track.active = False
+                    finished_tracks.append(track)
+                else:
+                    still_active.append(track)
+            active_tracks = still_active
+
+            for di, det in enumerate(detections):
+                if di in matched_d:
+                    continue
+                other_boxes = [b for b in all_boxes_this_frame if b != tuple(det["bbox"])]
+                active_tracks.append(
+                    VehicleTrack(
+                        det["bbox"], frame_count, timestamp, det["confidence"], det["crop"],
+                        frame.shape, other_boxes
+                    )
+                )
+
+        cap.release()
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
     finished_tracks.extend(active_tracks)
 
@@ -298,25 +370,23 @@ def process_video_stream(video_path: str, camera_id: str, sample_rate: int = 4):
 
     extracted_records = []
     for track in valid_tracks:
-        temp_crop_file = f"temp_{camera_id}_{track.track_id}_{track.best_frame_idx}.jpg"
-        cv2.imwrite(temp_crop_file, track.best_crop)
+        record = {
+            "track_id": f"{camera_id}_veh_{track.track_id}",
+            "camera_id": camera_id,
+            "frame_idx": track.best_frame_idx,
+            "timestamp_sec": track.best_timestamp_sec,
+            "bbox": track.best_bbox,
+            "confidence": round(track.best_confidence, 2),
+            "crop": track.best_crop,
+        }
 
-        try:
-            features = extractor(temp_crop_file)
-            extracted_records.append({
-                "track_id": f"{camera_id}_veh_{track.track_id}",
-                "camera_id": camera_id,
-                "frame_idx": track.best_frame_idx,
-                "timestamp_sec": track.best_timestamp_sec,
-                "bbox": track.best_bbox,
-                "confidence": round(track.best_confidence, 2),
-                "feature": features,
-                "crop": track.best_crop,
-                "color_hist": color_histogram(track.best_crop),
-            })
-        finally:
-            if os.path.exists(temp_crop_file):
-                os.remove(temp_crop_file)
+        # Module 2 only: ResNet50 embedding + color histogram, used by
+        # hungarian_match() for cross-camera similarity.
+        if extract_features:
+            record["feature"] = extractor(track.best_crop)
+            record["color_hist"] = color_histogram(track.best_crop)
+
+        extracted_records.append(record)
 
     return extracted_records
 
@@ -381,111 +451,104 @@ def hungarian_match(cam1_detections, cam2_detections):
     return matches
 
 
-@app.post("/debug-compare-video-streams")
-async def debug_compare_video_streams(
-    video1: UploadFile = File(...),
-    video2: UploadFile = File(...),
-):
-    path1 = f"temp_cam1_{video1.filename}"
-    path2 = f"temp_cam2_{video2.filename}"
+# ============================================================
+# API ENDPOINTS  (all mounted under /api via api_router)
+# ============================================================
 
-    with open(path1, "wb") as b1:
-        shutil.copyfileobj(video1.file, b1)
-    with open(path2, "wb") as b2:
-        shutil.copyfileobj(video2.file, b2)
+@api_router.post("/plate-detect")
+async def plate_detect(
+    file: UploadFile = File(...),
+    camera_id: str = Form("Camera_1")
+):
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Uploaded image is empty.")
+
+    nparr = np.frombuffer(contents, np.uint8)
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    if frame is None:
+        raise HTTPException(status_code=400, detail="OpenCV could not read the uploaded image.")
 
     try:
-        cam1_detections = process_video_stream(path1, camera_id="Cam_1", sample_rate=4)
-        cam2_detections = process_video_stream(path2, camera_id="Cam_2", sample_rate=4)
+        raw_result = read_plate(frame) or {}
 
-        os.makedirs("static/debug", exist_ok=True)
-
-        cam1_saved = []
-        for v in cam1_detections:
-            fname = f"debug_{v['track_id']}.jpg"
-            cv2.imwrite(f"static/debug/{fname}", v["crop"])
-            cam1_saved.append({
-                "track_id": v["track_id"],
-                "timestamp_sec": v["timestamp_sec"],
-                "confidence": v["confidence"],
-                "crop_url": f"http://localhost:8000/static/debug/{fname}"
-            })
-
-        cam2_saved = []
-        for v in cam2_detections:
-            fname = f"debug_{v['track_id']}.jpg"
-            cv2.imwrite(f"static/debug/{fname}", v["crop"])
-            cam2_saved.append({
-                "track_id": v["track_id"],
-                "timestamp_sec": v["timestamp_sec"],
-                "confidence": v["confidence"],
-                "crop_url": f"http://localhost:8000/static/debug/{fname}"
-            })
-
-        pair_breakdown = []
-        for v1 in cam1_detections:
-            for v2 in cam2_detections:
-                time_gap = v2["timestamp_sec"] - v1["timestamp_sec"]
-                c_dist = color_distance(v1["color_hist"], v2["color_hist"])
-                sim = max(0.0, float(F.cosine_similarity(v1["feature"], v2["feature"]).item()))
-
-                time_ok = MIN_TIME_GAP_SEC <= time_gap <= MAX_TIME_GAP_SEC
-                color_consistent = c_dist <= COLOR_ADVISORY_MAX
-                tier = confidence_tier(sim)
-
-                pair_breakdown.append({
-                    "cam1_track": v1["track_id"],
-                    "cam2_track": v2["track_id"],
-                    "similarity": round(sim, 4),
-                    "confidence_tier": tier,
-                    "time_gap_sec": round(time_gap, 2),
-                    "time_gap_passed": time_ok,
-                    "color_distance": round(c_dist, 4),
-                    "color_consistent": color_consistent,
-                    "surfaced_to_operator": time_ok and tier in ("high", "possible"),
-                })
-
-        pair_breakdown.sort(key=lambda p: p["similarity"], reverse=True)
+        plate_text = raw_result.get("plate_text", None)
+        confidence = raw_result.get("confidence", 0.0)
+        plate_box = raw_result.get("plate_box") or raw_result.get("bbox") or None
+        plate_type = raw_result.get("plate_type", "Standard")
+        selected_model = raw_result.get("selected_model", "YOLOv8 + EasyOCR")
 
         return {
             "status": "success",
-            "note": "All crops saved to static/debug/ regardless of match outcome. Color is advisory only and does not filter candidates.",
-            "current_thresholds": {
-                "similarity_high_confidence": SIMILARITY_HIGH_CONFIDENCE,
-                "similarity_low_confidence": SIMILARITY_LOW_CONFIDENCE,
-                "max_time_gap_sec": MAX_TIME_GAP_SEC,
-                "min_time_gap_sec": MIN_TIME_GAP_SEC,
-                "color_advisory_max": COLOR_ADVISORY_MAX,
-            },
-            "cam1_tracks": cam1_saved,
-            "cam2_tracks": cam2_saved,
-            "pairwise_breakdown": pair_breakdown,
+            "camera_id": camera_id,
+            "plate_text": plate_text,
+            "confidence": confidence,
+            "plate_box": plate_box,
+            "bbox": plate_box,
+            "plate_type": plate_type,
+            "selected_model": selected_model,
+            "results": [
+                {
+                    "plate_text": plate_text,
+                    "confidence": confidence,
+                    "plate_box": plate_box,
+                    "plate_type": plate_type,
+                    "selected_model": selected_model,
+                }
+            ] if plate_text else []
         }
 
     except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Plate detection failed", "error": str(e)}
+        )
+
+
+@api_router.post("/compare")
+async def compare_vehicles(file1: UploadFile = File(...), file2: UploadFile = File(...)):
+    invalid_exts = ('.mp4', '.avi', '.mov', '.mkv')
+    if file1.filename.endswith(invalid_exts) or file2.filename.endswith(invalid_exts):
+        raise HTTPException(
+            status_code=400,
+            detail="The /compare endpoint only accepts image files."
+        )
+
+    b1 = await file1.read()
+    b2 = await file2.read()
+
+    img1 = cv2.imdecode(np.frombuffer(b1, np.uint8), cv2.IMREAD_COLOR)
+    img2 = cv2.imdecode(np.frombuffer(b2, np.uint8), cv2.IMREAD_COLOR)
+
+    try:
+        f1 = extractor(img1)
+        f2 = extractor(img2)
+        score = max(0.0, float(F.cosine_similarity(f1, f2).item()))
+        tier = confidence_tier(score)
+        return {
+            "status": "success",
+            "similarity": round(score, 4),
+            "similarityPercentage": f"{round(score * 100, 2)}%",
+            "confidence_tier": tier,
+            "sameVehicle": tier == "high"
+        }
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        for temp_f in [path1, path2]:
-            if os.path.exists(temp_f):
-                os.remove(temp_f)
 
 
-@app.post("/compare-video-streams")
+@api_router.post("/compare-video-streams")
 async def compare_video_streams(
     video1: UploadFile = File(...),
     video2: UploadFile = File(...),
 ):
-    path1 = f"temp_cam1_{video1.filename}"
-    path2 = f"temp_cam2_{video2.filename}"
-
-    with open(path1, "wb") as b1:
-        shutil.copyfileobj(video1.file, b1)
-    with open(path2, "wb") as b2:
-        shutil.copyfileobj(video2.file, b2)
+    b1 = await video1.read()
+    b2 = await video2.read()
 
     try:
-        cam1_detections = process_video_stream(path1, camera_id="Cam_1", sample_rate=4)
-        cam2_detections = process_video_stream(path2, camera_id="Cam_2", sample_rate=4)
+        cam1_detections = process_video_bytes(b1, camera_id="Cam_1", sample_rate=4, extract_features=True)
+        cam2_detections = process_video_bytes(b2, camera_id="Cam_2", sample_rate=4, extract_features=True)
 
         assignment = hungarian_match(cam1_detections, cam2_detections)
 
@@ -494,12 +557,6 @@ async def compare_video_streams(
             idx, jdx = m["i"], m["j"]
             v1 = cam1_detections[idx]
             v2 = cam2_detections[jdx]
-
-            crop1_filename = f"match_{idx}_{jdx}_cam1.jpg"
-            crop2_filename = f"match_{idx}_{jdx}_cam2.jpg"
-
-            cv2.imwrite(f"static/matches/{crop1_filename}", v1["crop"])
-            cv2.imwrite(f"static/matches/{crop2_filename}", v2["crop"])
 
             matches.append({
                 "match_id": f"{v1['track_id']}-{v2['track_id']}",
@@ -510,7 +567,6 @@ async def compare_video_streams(
                     "timestamp": f"{v1['timestamp_sec']}s",
                     "bbox": v1["bbox"],
                     "confidence": v1["confidence"],
-                    "crop_url": f"http://localhost:8000/static/matches/{crop1_filename}"
                 },
                 "cam2_details": {
                     "camera_id": v2["camera_id"],
@@ -519,7 +575,6 @@ async def compare_video_streams(
                     "timestamp": f"{v2['timestamp_sec']}s",
                     "bbox": v2["bbox"],
                     "confidence": v2["confidence"],
-                    "crop_url": f"http://localhost:8000/static/matches/{crop2_filename}"
                 },
                 "similarity_score": round(m["similarity"], 4),
                 "similarity_percentage": f"{round(m['similarity'] * 100, 2)}%",
@@ -542,44 +597,10 @@ async def compare_video_streams(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        for temp_f in [path1, path2]:
-            if os.path.exists(temp_f):
-                os.remove(temp_f)
 
 
-@app.post("/compare")
-async def compare_vehicles(file1: UploadFile = File(...), file2: UploadFile = File(...)):
-    invalid_exts = ('.mp4', '.avi', '.mov', '.mkv')
-    if file1.filename.endswith(invalid_exts) or file2.filename.endswith(invalid_exts):
-        raise HTTPException(
-            status_code=400,
-            detail="The /compare endpoint only accepts image files. Use /compare-video-streams for videos."
-        )
-
-    path1, path2 = f"temp_1_{file1.filename}", f"temp_2_{file2.filename}"
-    with open(path1, "wb") as b1:
-        shutil.copyfileobj(file1.file, b1)
-    with open(path2, "wb") as b2:
-        shutil.copyfileobj(file2.file, b2)
-
-    try:
-        f1, f2 = extractor(path1), extractor(path2)
-        score = max(0.0, float(F.cosine_similarity(f1, f2).item()))
-        tier = confidence_tier(score)
-        return {
-            "status": "success",
-            "similarity": round(score, 4),
-            "similarityPercentage": f"{round(score * 100, 2)}%",
-            "confidence_tier": tier,
-            "sameVehicle": tier == "high"
-        }
-    finally:
-        for p in [path1, path2]:
-            if os.path.exists(p):
-                os.remove(p)
-
+app.include_router(api_router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
