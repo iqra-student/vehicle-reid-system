@@ -1,21 +1,50 @@
+# Dependencies & Build Artifacts
 node_modules/
 **/node_modules/
-.env
+dist/
 **/dist
+build/
+**/build
+
+# Environment Secrets
+.env
+**/.env
+.env.local
+
+# Python Environments & Cache
 venv/
 **/venv/
-__pycache__/
+.venv/
 **/__pycache__/
+__pycache__/
 *.pyc
-# Ignore heavy dataset files
+*.pyo
+
+# Datasets & Compressed Archives
 ml_service/Data/
 ml_service/data/
 *.zip
-# Model weights & binary artifacts
+*.tar.gz
+*.rar
+
+# Model Weights & Binary Artifacts
 *.pth
 *.pt
 *.onnx
+weights/
+**/weights/
 ml_service/weights/
 
-# ML generated output
+# Video Files & Media (Never push to GitHub)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# ML Generated Outputs & Temp Storage
 ml_service/static/
+ml_service/uploads/
+server/uploads/
+uploads/
+**/uploads/

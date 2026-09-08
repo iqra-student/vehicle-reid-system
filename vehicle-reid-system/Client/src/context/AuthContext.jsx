@@ -1,18 +1,18 @@
-import { createContext, useContext, useState, useCallback } from "react";
-import { jwtDecode } from "jwt-decode";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";import { jwtDecode } from "jwt-decode";
 import axiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  }, []);
   const persistSession = useCallback((responseData) => {
     const { token: newToken, user: userFromApi } = responseData;
 
