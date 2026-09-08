@@ -133,6 +133,18 @@ const TrackGrid = ({ title, tracks }) => (
   </div>
 );
 
+const parseVehicleFilename = (filename) => {
+  if (!filename) return null;
+  const match = filename.match(/^(\d+)_c(\d+)_(\d+)_\d+\.jpg$/i);
+  if (!match) return { vehicleId: '—', camera: '—', raw: filename };
+  const [, vehicleId, camera] = match;
+  return {
+    vehicleId: `Vehicle #${parseInt(vehicleId, 10)}`,
+    camera: `Camera ${parseInt(camera, 10)}`,
+    raw: filename,
+  };
+};
+
 // --- Main Engine Component ---
 export default function VehicleReIDEngine() {
   const [mode, setMode] = useState('video');
@@ -148,6 +160,11 @@ export default function VehicleReIDEngine() {
   const [threshold, setThreshold] = useState(0.78);
   const [matchDecisions, setMatchDecisions] = useState({});
 
+  const [queryFile, setQueryFile] = useState(null);
+  const [queryPreview, setQueryPreview] = useState(null);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchResult, setMatchResult] = useState(null);
+
   const handleFileChange = (e, fileNumber) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
@@ -161,11 +178,21 @@ export default function VehicleReIDEngine() {
     }
   };
 
+  const handleQueryFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+    setQueryFile(selectedFile);
+    setQueryPreview(URL.createObjectURL(selectedFile));
+    setMatchResult(null);
+  };
+
   const handleReset = () => {
     setFile1(null);
     setFile2(null);
     setPreview1(null);
     setPreview2(null);
+    setQueryFile(null);
+    setQueryPreview(null);
     clearResults();
   };
 
@@ -173,6 +200,7 @@ export default function VehicleReIDEngine() {
     setResult(null);
     setVideoResult(null);
     setDebugResult(null);
+    setMatchResult(null);
     setMatchDecisions({});
   };
 
@@ -202,47 +230,27 @@ export default function VehicleReIDEngine() {
     }
   };
 
-  const handleCompare = async () => {
-    if (!file1 || !file2) {
-      alert(`Please upload both vehicle ${mode === 'video' ? 'video feeds' : 'images'}.`);
-      return;
-    }
+const handleCompare = async () => {
+  if (!file1 || !file2) {
+    alert('Please upload both vehicle video feeds.');
+    return;
+  }
 
-    setLoading(true);
-    clearResults();
+  setLoading(true);
+  clearResults();
 
-    if (mode === 'video') {
-      await executeApiCall(
-        '/compare-video-streams',
-        (fd) => {
-          fd.append('video1', file1);
-          fd.append('video2', file2);
-          fd.append('threshold', threshold);
-        },
-        (data) => setVideoResult(data)
-      );
-    } else {
-      await executeApiCall(
-        '/compare',
-        (fd) => {
-          fd.append('file1', file1);
-          fd.append('file2', file2);
-        },
-        (data) => {
-          const rawResult = data.result || data;
-          const simScore = rawResult.similarity;
-          setResult({
-            similarity: simScore,
-            similarityPercentage: `${(simScore * 100).toFixed(2)}%`,
-            confidenceTier: rawResult.confidence_tier,
-            sameVehicle: rawResult.confidence_tier === 'high',
-            margin: `${((simScore - threshold) * 100).toFixed(2)}%`,
-          });
-        }
-      );
-    }
-    setLoading(false);
-  };
+  await executeApiCall(
+    '/compare-video-streams',
+    (fd) => {
+      fd.append('video1', file1);
+      fd.append('video2', file2);
+      fd.append('threshold', threshold);
+    },
+    (data) => setVideoResult(data)
+  );
+
+  setLoading(false);
+};
 
   const handleDebugCompare = async () => {
     if (mode !== 'video') {
@@ -269,6 +277,35 @@ export default function VehicleReIDEngine() {
     setDebugLoading(false);
   };
 
+const handleFindMatch = async () => {
+  if (!queryFile) {
+    alert('Please upload a vehicle image to search.');
+    return;
+  }
+
+  setMatchLoading(true);
+  clearResults();
+
+  await executeApiCall(
+    '/find-match',
+    (fd) => {
+      fd.append('file', queryFile);
+    },
+    (data) => {
+      setMatchResult({
+        queryFilename: queryFile.name,
+        matches: data.matches.map((m) => ({
+          matchedFilename: m.matched_filename,
+          confidence: m.confidence,
+          confidencePercentage: m.confidencePercentage,
+          matchedImageUrl: `http://localhost:8000/gallery/${m.matched_filename}`,
+        })),
+      });
+    }
+  );
+
+  setMatchLoading(false);
+};
   const handleConfirmMatch = (matchId) => {
     setMatchDecisions((prev) => ({ ...prev, [matchId]: 'confirmed' }));
   };
@@ -277,7 +314,9 @@ export default function VehicleReIDEngine() {
     setMatchDecisions((prev) => ({ ...prev, [matchId]: 'rejected' }));
   };
 
-  const isDisabled = loading || debugLoading || !file1 || !file2;
+  const isDisabled = mode === 'search'
+    ? (matchLoading || !queryFile)
+    : (loading || debugLoading || !file1 || !file2);
 
   return (
     <div className="space-y-6 text-[#0D2440] font-sans antialiased">
@@ -286,18 +325,20 @@ export default function VehicleReIDEngine() {
         <div>
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-5 border-b border-[#E7F0FA] pb-3 gap-3">
             <div>
-              <h2 className="text-sm font-bold text-[#0D2440] flex items-center gap-2">
+                           <h2 className="text-sm font-bold text-[#0D2440] flex items-center gap-2">
                 <PulseIcon />
-                {mode === 'video' ? 'Dual Video Input' : 'Cropped Vehicles Pair'}
+                {mode === 'video' ? 'Dual Video Input' : 'Single-Image Gallery Search'}
               </h2>
               <p className="text-xs text-[#4B617D] mt-0.5">
-                {mode === 'video' ? 'Upload 2 surveillance feeds for automated cross-matching' : 'Upload 2 cropped vehicle images'}
+                {mode === 'video'
+                  ? 'Upload 2 surveillance feeds for automated cross-matching'
+                  : 'Upload 1 vehicle image and automatically find its best match in the gallery'}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 shrink-0">
               <div className="flex items-center gap-1.5 bg-[#E7F0FA] p-1.5 rounded-xl border border-[#2E5E99]/20">
-                {['video', 'image'].map((m) => (
+                {['video', 'search'].map((m) => (
                   <button
                     key={m}
                     onClick={() => switchMode(m)}
@@ -305,53 +346,67 @@ export default function VehicleReIDEngine() {
                       mode === m ? 'bg-[#0D2440] text-white shadow-sm' : 'text-[#0D2440] hover:bg-white/50'
                     }`}
                   >
-                    {m === 'video' ? '2-Cam Video' : 'Single Crop'}
+{m === 'video' ? '2-Cam Video' : 'Find Match'}
                   </button>
                 ))}
               </div>
 
-              <div className="flex items-center gap-3 bg-[#E7F0FA] px-4 py-2 rounded-xl border border-[#2E5E99]/10">
-                <span className="text-[10px] font-bold text-[#4B617D] uppercase tracking-wider whitespace-nowrap">
-                  Match Threshold
-                </span>
-                <input
-                  type="range"
-                  min="0.50"
-                  max="0.95"
-                  step="0.01"
-                  value={threshold}
-                  onChange={(e) => setThreshold(parseFloat(e.target.value))}
-                  className="w-28 accent-[#0D2440] cursor-pointer"
-                />
-                <span className="bg-[#0D2440] text-white font-mono font-bold text-xs px-2.5 py-1 rounded-md min-w-[44px] text-center">
-                  {(threshold * 100).toFixed(0)}%
-                </span>
-              </div>
+              {mode !== 'search' && (
+                <div className="flex items-center gap-3 bg-[#E7F0FA] px-4 py-2 rounded-xl border border-[#2E5E99]/10">
+                  <span className="text-[10px] font-bold text-[#4B617D] uppercase tracking-wider whitespace-nowrap">
+                    Match Threshold
+                  </span>
+                  <input
+                    type="range"
+                    min="0.50"
+                    max="0.95"
+                    step="0.01"
+                    value={threshold}
+                    onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                    className="w-28 accent-[#0D2440] cursor-pointer"
+                  />
+                  <span className="bg-[#0D2440] text-white font-mono font-bold text-xs px-2.5 py-1 rounded-md min-w-[44px] text-center">
+                    {(threshold * 100).toFixed(0)}%
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <UploadTile
-              label={mode === 'video' ? "Upload Cam 1 Feed (.mp4)" : "Upload Vehicle Image A"}
-              inputId="file1-input"
-              preview={preview1}
-              isVideo={mode === 'video'}
-              onFileChange={(e) => handleFileChange(e, 1)}
-            />
-            <UploadTile
-              label={mode === 'video' ? "Upload Cam 2 Feed (.mp4)" : "Upload Vehicle Image B"}
-              inputId="file2-input"
-              preview={preview2}
-              isVideo={mode === 'video'}
-              onFileChange={(e) => handleFileChange(e, 2)}
-            />
-          </div>
+          {mode === 'search' ? (
+            <div className="grid grid-cols-1 gap-6">
+              <UploadTile
+                label="Upload Vehicle Image to Search"
+                inputId="query-file-input"
+                preview={queryPreview}
+                isVideo={false}
+                onFileChange={handleQueryFileChange}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <UploadTile
+                label={mode === 'video' ? "Upload Cam 1 Feed (.mp4)" : "Upload Vehicle Image A"}
+                inputId="file1-input"
+                preview={preview1}
+                isVideo={mode === 'video'}
+                onFileChange={(e) => handleFileChange(e, 1)}
+              />
+              <UploadTile
+                label={mode === 'video' ? "Upload Cam 2 Feed (.mp4)" : "Upload Vehicle Image B"}
+                inputId="file2-input"
+                preview={preview2}
+                isVideo={mode === 'video'}
+                onFileChange={(e) => handleFileChange(e, 2)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 pt-2">
           <button
-            onClick={handleCompare}
+            onClick={mode === 'search' ? handleFindMatch : handleCompare}
             disabled={isDisabled}
             className={`flex-1 py-3 px-5 rounded-xl font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 ${
               isDisabled
@@ -359,13 +414,13 @@ export default function VehicleReIDEngine() {
                 : 'bg-[#E7F0FA] hover:bg-[#0D2440] text-[#0D2440] hover:text-white border border-[#2E5E99]/20 shadow-xs'
             }`}
           >
-            {loading ? (
+            {(mode === 'search' ? matchLoading : loading) ? (
               <>
                 <span className="w-4 h-4 border-2 border-[#0D2440] border-t-transparent rounded-full animate-spin"></span>
-                Scanning Frames & Extracting Features...
+                {mode === 'search' ? 'Searching Gallery for Match...' : 'Scanning Frames & Extracting Features...'}
               </>
             ) : (
-              'RUN RE-ID '
+              mode === 'search' ? 'FIND MATCH' : 'RUN RE-ID'
             )}
           </button>
 
@@ -509,28 +564,48 @@ export default function VehicleReIDEngine() {
         </section>
       )}
 
-      {/* Image Crop Mode Results */}
-      {result && (
+      {/* Find Match (Single-Image Gallery Search) Results */}
+      {matchResult && (
         <section className="bg-white border border-[#2E5E99]/10 rounded-2xl p-6 shadow-xs space-y-5">
           <div className="flex justify-between items-center border-b border-[#E7F0FA] pb-3.5">
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#0D2440]">
-                Identity Verification Assessment
+                Top {matchResult.matches.length} Matches Found
               </h3>
-              <p className="text-[11px] text-[#4B617D] mt-0.5">Feature vector similarity evaluated across visual embeddings</p>
+              <p className="text-[11px] text-[#4B617D] mt-0.5">Closest matches from gallery, ranked by classifier confidence</p>
             </div>
-            <TierBadge tier={result.confidenceTier} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <ResultTile title="Similarity Score" value={result.similarity.toFixed(4)} subtext="Range [0.0 - 1.0]" />
-            <ResultTile title="Match Confidence" value={result.similarityPercentage} subtext="Feature Vector Overlap" />
-            <ResultTile title="Applied Threshold" value={`${(threshold * 100).toFixed(0)}%`} subtext="Decision Cut-off" />
-            <ResultTile title="Decision Margin" value={result.margin} subtext="Delta to Threshold" />
+
+          <div>
+            <span className="text-xs font-bold text-[#4B617D] uppercase block mb-2">Query Image</span>
+            <img src={queryPreview} alt="Query" className="w-full sm:w-64 h-40 object-cover rounded-lg border border-[#2E5E99]/30" />
+                        <div className="text-[10px] text-[#4B617D] font-mono mt-1">{matchResult.queryFilename}</div>
+
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {matchResult.matches.map((m, idx) => {
+              const parsed = parseVehicleFilename(m.matchedFilename);
+              const tier = m.confidence >= 0.85 ? 'high' : m.confidence >= 0.5 ? 'possible' : 'unlikely';
+              return (
+                <div key={idx} className="border border-[#2E5E99]/10 rounded-xl overflow-hidden">
+                  <img src={m.matchedImageUrl} alt={`Match ${idx + 1}`} className="w-full h-40 object-cover" />
+                  <div className="p-3 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-[#0D2440]">Rank #{idx + 1}</span>
+                      <TierBadge tier={tier} />
+                    </div>
+                    <div className="text-sm font-black font-mono text-[#0D2440]">{m.confidencePercentage}</div>
+                    <div className="text-[10px] text-[#4B617D] font-mono">{parsed?.vehicleId} · {parsed?.camera}</div>
+                                      <div className="text-[9px] text-[#4B617D]/50 font-mono truncate" title={m.matchedFilename}>{m.matchedFilename}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
 
-      
       {/* Debug Results Panel */}
       {debugResult && (
         <section className="bg-white border border-amber-400/40 rounded-2xl p-6 shadow-xs space-y-5">
