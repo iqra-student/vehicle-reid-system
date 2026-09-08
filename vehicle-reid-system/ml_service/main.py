@@ -11,10 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from ultralytics import YOLO
 
+# Import CongestionEngine from Module 4
+from congestion_engine import CongestionEngine
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "deep-person-reid"))
 from torchreid.utils import FeatureExtractor
 
-app = FastAPI(title="Vehicle Re-ID Engine - Module 2")
+app = FastAPI(title="Smart City Surveillance - Re-ID & Congestion Engine")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,6 +28,7 @@ app.add_middleware(
 )
 
 os.makedirs("static/matches", exist_ok=True)
+os.makedirs("static/debug", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 device_type = "cuda" if torch.cuda.is_available() else "cpu"
@@ -51,12 +55,11 @@ MIN_TRACK_HITS = 2
 MIN_SHARPNESS = 8.0
 MIN_BOX_AREA = 4000
 
-
+# ----------------- MODULE 2 UTILITIES -----------------
 def enhance_image(crop_img):
     if crop_img is None or crop_img.size == 0:
         return crop_img
     return cv2.GaussianBlur(crop_img, (3, 3), 0)
-
 
 def sharpness_score(crop_img):
     if crop_img is None or crop_img.size == 0:
@@ -64,92 +67,73 @@ def sharpness_score(crop_img):
     gray = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
     return float(cv2.Laplacian(gray, cv2.CV_64F).var())
 
-
 def color_histogram(crop_img):
     if crop_img is None or crop_img.size == 0:
         return None
-
     h, w = crop_img.shape[:2]
     y0, y1 = int(h * 0.15), int(h * 0.85)
     x0, x1 = int(w * 0.15), int(w * 0.85)
     center_crop = crop_img[y0:y1, x0:x1]
     if center_crop.size == 0:
         center_crop = crop_img
-
     hsv = cv2.cvtColor(center_crop, cv2.COLOR_BGR2HSV)
     hist = cv2.calcHist([hsv], [0, 1], None, [30, 32], [0, 180, 0, 256])
     cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
     return hist
-
 
 def color_distance(hist1, hist2):
     if hist1 is None or hist2 is None:
         return 1.0
     return float(cv2.compareHist(hist1, hist2, cv2.HISTCMP_BHATTACHARYYA))
 
-
 def iou(box_a, box_b):
     ax1, ay1, ax2, ay2 = box_a
     bx1, by1, bx2, by2 = box_b
-
     inter_x1 = max(ax1, bx1)
     inter_y1 = max(ay1, by1)
     inter_x2 = min(ax2, bx2)
     inter_y2 = min(ay2, by2)
-
     inter_w = max(0, inter_x2 - inter_x1)
     inter_h = max(0, inter_y2 - inter_y1)
     inter_area = inter_w * inter_h
-
     area_a = max(0, ax2 - ax1) * max(0, ay2 - ay1)
     area_b = max(0, bx2 - bx1) * max(0, by2 - by1)
     union = area_a + area_b - inter_area
-
     if union <= 0:
         return 0.0
     return inter_area / union
-
 
 def centroid(bbox):
     x1, y1, x2, y2 = bbox
     return ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
 
-
 def bbox_diagonal(bbox):
     x1, y1, x2, y2 = bbox
     return float(np.hypot(x2 - x1, y2 - y1))
-
 
 def track_match_score(box_a, box_b):
     iou_score = iou(box_a, box_b)
     if iou_score >= IOU_MATCH_THRESHOLD:
         return iou_score
-
     ca, cb = centroid(box_a), centroid(box_b)
     dist = float(np.hypot(ca[0] - cb[0], ca[1] - cb[1]))
     avg_diag = (bbox_diagonal(box_a) + bbox_diagonal(box_b)) / 2.0
     if avg_diag <= 0:
         return 0.0
-
     max_allowed_dist = CENTROID_MATCH_RATIO * avg_diag
     if dist <= max_allowed_dist:
         return 1.0 - (dist / max_allowed_dist)
-
     return 0.0
-
 
 class VehicleTrack:
     _next_id = 0
-
     def __init__(self, bbox, frame_idx, timestamp_sec, confidence, crop, frame_shape, other_boxes):
         self.track_id = VehicleTrack._next_id
         VehicleTrack._next_id += 1
-
         self.last_bbox = bbox
         self.missed_frames = 0
         self.active = True
         self.hit_count = 1
-
         self.best_score = self._frame_score(bbox, crop, frame_shape, other_boxes)
         self.best_raw_sharpness = sharpness_score(crop)
         self.best_bbox = bbox
@@ -163,7 +147,6 @@ class VehicleTrack:
         x1, y1, x2, y2 = bbox
         area = max(1, (x2 - x1) * (y2 - y1))
         score = sharpness_score(crop) * (area ** 0.5)
-
         frame_h, frame_w = frame_shape[:2]
         edge_margin = 3
         is_clipped = (
@@ -172,7 +155,6 @@ class VehicleTrack:
         )
         if is_clipped:
             score *= 0.15
-
         max_overlap = 0.0
         for other in other_boxes:
             if other is bbox:
@@ -180,14 +162,12 @@ class VehicleTrack:
             max_overlap = max(max_overlap, iou(bbox, other))
         if max_overlap > 0.1:
             score *= max(0.1, 1.0 - max_overlap)
-
         return score
 
     def update(self, bbox, frame_idx, timestamp_sec, confidence, crop, frame_shape, other_boxes):
         self.last_bbox = bbox
         self.missed_frames = 0
         self.hit_count += 1
-
         score = self._frame_score(bbox, crop, frame_shape, other_boxes)
         if score > self.best_score:
             self.best_score = score
@@ -198,11 +178,9 @@ class VehicleTrack:
             self.best_confidence = confidence
             self.best_crop = crop
 
-
 def process_video_stream(video_path: str, camera_id: str, sample_rate: int = 4):
     cap = cv2.VideoCapture(video_path)
     frame_count = 0
-
     active_tracks = []
     finished_tracks = []
 
@@ -249,7 +227,6 @@ def process_video_stream(video_path: str, camera_id: str, sample_rate: int = 4):
         pairs.sort(key=lambda p: p[0], reverse=True)
 
         all_boxes_this_frame = [tuple(d["bbox"]) for d in detections]
-
         matched_t, matched_d = set(), set()
         for score, ti, di in pairs:
             if ti in matched_t or di in matched_d:
@@ -288,7 +265,6 @@ def process_video_stream(video_path: str, camera_id: str, sample_rate: int = 4):
             )
 
     cap.release()
-
     finished_tracks.extend(active_tracks)
 
     valid_tracks = [
@@ -320,19 +296,15 @@ def process_video_stream(video_path: str, camera_id: str, sample_rate: int = 4):
 
     return extracted_records
 
-
 def build_candidate_mask(cam1_detections, cam2_detections):
     n, m = len(cam1_detections), len(cam2_detections)
     mask = np.ones((n, m), dtype=bool)
-
     for i, v1 in enumerate(cam1_detections):
         for j, v2 in enumerate(cam2_detections):
             time_gap = v2["timestamp_sec"] - v1["timestamp_sec"]
             if time_gap < MIN_TIME_GAP_SEC or time_gap > MAX_TIME_GAP_SEC:
                 mask[i, j] = False
-
     return mask
-
 
 def confidence_tier(similarity: float) -> str:
     if similarity >= SIMILARITY_HIGH_CONFIDENCE:
@@ -341,15 +313,14 @@ def confidence_tier(similarity: float) -> str:
         return "possible"
     return "unlikely"
 
-
 def hungarian_match(cam1_detections, cam2_detections):
     n, m = len(cam1_detections), len(cam2_detections)
     if n == 0 or m == 0:
         return []
 
     candidate_mask = build_candidate_mask(cam1_detections, cam2_detections)
-
     similarity = np.zeros((n, m), dtype=np.float64)
+
     for i, v1 in enumerate(cam1_detections):
         for j, v2 in enumerate(cam2_detections):
             if not candidate_mask[i, j]:
@@ -358,7 +329,6 @@ def hungarian_match(cam1_detections, cam2_detections):
             similarity[i, j] = max(0.0, float(sim.item()))
 
     cost = np.where(candidate_mask, 1.0 - similarity, 10.0)
-
     row_idx, col_idx = linear_sum_assignment(cost)
 
     matches = []
@@ -377,18 +347,40 @@ def hungarian_match(cam1_detections, cam2_detections):
                 "color_distance": round(c_dist, 4),
                 "color_consistent": c_dist <= COLOR_ADVISORY_MAX,
             })
-
     return matches
 
-
-@app.post("/debug-compare-video-streams")
-async def debug_compare_video_streams(
-    video1: UploadFile = File(...),
-    video2: UploadFile = File(...),
+# ----------------- MODULE 4 ENDPOINTS -----------------
+@app.post("/detect-congestion")
+async def detect_congestion_endpoint(
+    video: UploadFile = File(...),
+    camera_id: str = Form("CAM_01"),
+    hold_time_sec: float = Form(10.0)  # Default 10s for testing (Use 300.0 in prod)
 ):
-    path1 = f"temp_cam1_{video1.filename}"
-    path2 = f"temp_cam2_{video2.filename}"
+    temp_video_path = f"temp_congestion_{video.filename}"
+    with open(temp_video_path, "wb") as buffer:
+        shutil.copyfileobj(video.file, buffer)
 
+    try:
+        engine = CongestionEngine(
+            model_path="yolov8n.pt",
+            node_backend_url="http://localhost:5000/api/congestion/log",
+            hold_time_sec=hold_time_sec
+        )
+        result = engine.analyze_video(
+            video_path=temp_video_path,
+            camera_id=camera_id
+        )
+        return {"status": "success", "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if os.path.exists(temp_video_path):
+            os.remove(temp_video_path)
+
+# ----------------- MODULE 2 ENDPOINTS -----------------
+@app.post("/debug-compare-video-streams")
+async def debug_compare_video_streams(video1: UploadFile = File(...), video2: UploadFile = File(...)):
+    path1, path2 = f"temp_cam1_{video1.filename}", f"temp_cam2_{video2.filename}"
     with open(path1, "wb") as b1:
         shutil.copyfileobj(video1.file, b1)
     with open(path2, "wb") as b2:
@@ -397,8 +389,6 @@ async def debug_compare_video_streams(
     try:
         cam1_detections = process_video_stream(path1, camera_id="Cam_1", sample_rate=4)
         cam2_detections = process_video_stream(path2, camera_id="Cam_2", sample_rate=4)
-
-        os.makedirs("static/debug", exist_ok=True)
 
         cam1_saved = []
         for v in cam1_detections:
@@ -428,7 +418,6 @@ async def debug_compare_video_streams(
                 time_gap = v2["timestamp_sec"] - v1["timestamp_sec"]
                 c_dist = color_distance(v1["color_hist"], v2["color_hist"])
                 sim = max(0.0, float(F.cosine_similarity(v1["feature"], v2["feature"]).item()))
-
                 time_ok = MIN_TIME_GAP_SEC <= time_gap <= MAX_TIME_GAP_SEC
                 color_consistent = c_dist <= COLOR_ADVISORY_MAX
                 tier = confidence_tier(sim)
@@ -449,19 +438,10 @@ async def debug_compare_video_streams(
 
         return {
             "status": "success",
-            "note": "All crops saved to static/debug/ regardless of match outcome. Color is advisory only and does not filter candidates.",
-            "current_thresholds": {
-                "similarity_high_confidence": SIMILARITY_HIGH_CONFIDENCE,
-                "similarity_low_confidence": SIMILARITY_LOW_CONFIDENCE,
-                "max_time_gap_sec": MAX_TIME_GAP_SEC,
-                "min_time_gap_sec": MIN_TIME_GAP_SEC,
-                "color_advisory_max": COLOR_ADVISORY_MAX,
-            },
             "cam1_tracks": cam1_saved,
             "cam2_tracks": cam2_saved,
             "pairwise_breakdown": pair_breakdown,
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -469,15 +449,9 @@ async def debug_compare_video_streams(
             if os.path.exists(temp_f):
                 os.remove(temp_f)
 
-
 @app.post("/compare-video-streams")
-async def compare_video_streams(
-    video1: UploadFile = File(...),
-    video2: UploadFile = File(...),
-):
-    path1 = f"temp_cam1_{video1.filename}"
-    path2 = f"temp_cam2_{video2.filename}"
-
+async def compare_video_streams(video1: UploadFile = File(...), video2: UploadFile = File(...)):
+    path1, path2 = f"temp_cam1_{video1.filename}", f"temp_cam2_{video2.filename}"
     with open(path1, "wb") as b1:
         shutil.copyfileobj(video1.file, b1)
     with open(path2, "wb") as b2:
@@ -486,15 +460,12 @@ async def compare_video_streams(
     try:
         cam1_detections = process_video_stream(path1, camera_id="Cam_1", sample_rate=4)
         cam2_detections = process_video_stream(path2, camera_id="Cam_2", sample_rate=4)
-
         assignment = hungarian_match(cam1_detections, cam2_detections)
 
         matches = []
         for m in assignment:
             idx, jdx = m["i"], m["j"]
-            v1 = cam1_detections[idx]
-            v2 = cam2_detections[jdx]
-
+            v1, v2 = cam1_detections[idx], cam2_detections[jdx]
             crop1_filename = f"match_{idx}_{jdx}_cam1.jpg"
             crop2_filename = f"match_{idx}_{jdx}_cam2.jpg"
 
@@ -531,7 +502,6 @@ async def compare_video_streams(
 
         return {
             "status": "success",
-            "module": "Module 2 - Vehicle Re-Identification",
             "cam1_vehicles_found": len(cam1_detections),
             "cam2_vehicles_found": len(cam2_detections),
             "total_reid_matches": len(matches),
@@ -539,14 +509,12 @@ async def compare_video_streams(
             "possible_matches": sum(1 for m in matches if m["confidence_tier"] == "possible"),
             "matches": matches
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         for temp_f in [path1, path2]:
             if os.path.exists(temp_f):
                 os.remove(temp_f)
-
 
 @app.post("/compare")
 async def compare_vehicles(file1: UploadFile = File(...), file2: UploadFile = File(...)):
@@ -578,7 +546,6 @@ async def compare_vehicles(file1: UploadFile = File(...), file2: UploadFile = Fi
         for p in [path1, path2]:
             if os.path.exists(p):
                 os.remove(p)
-
 
 if __name__ == "__main__":
     import uvicorn
