@@ -60,7 +60,16 @@ function TrailView({ trail }) {
 }
 
 export default function PlateSearchPage() {
-  const [activeTab, setActiveTab] = useState("upload");
+  const [activeTab, setActiveTab] = useState("track");
+
+  // 3.3 Video tracking
+  const [trackFile, setTrackFile] = useState(null);
+  const [trackBusy, setTrackBusy] = useState(false);
+  const [trackStatus, setTrackStatus] = useState("Upload a camera video, or use sample.mp4.");
+  const [trackProgress, setTrackProgress] = useState(0);
+  const [trackError, setTrackError] = useState(null);
+  const [trackPlates, setTrackPlates] = useState([]);
+  const [trackVideoUrl, setTrackVideoUrl] = useState(null);
 
   // Upload Tab (Image)
   const [selectedFile, setSelectedFile] = useState(null);
@@ -107,6 +116,106 @@ export default function PlateSearchPage() {
     };
     fetchCameras();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (trackVideoUrl) URL.revokeObjectURL(trackVideoUrl);
+    };
+  }, [trackVideoUrl]);
+
+  const apiError = (err, fallback) => {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === "string") return detail;
+    if (detail?.message) return detail.message;
+    return err.response?.data?.error || fallback;
+  };
+
+  const resetTrackOutput = () => {
+    setTrackError(null);
+    setTrackPlates([]);
+    setTrackProgress(0);
+    setTrackVideoUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
+  const pollTrackJob = async (jobId) => {
+    while (true) {
+      const statusRes = await axiosInstance.get(`/plate-track-status/${jobId}`);
+      const job = statusRes.data;
+      setTrackStatus(job.message || "Working...");
+      if (job.total) {
+        setTrackProgress(Math.min(100, Math.round((job.frame / job.total) * 100)));
+      }
+      if (job.status === "done") {
+        const videoRes = await axiosInstance.get(`/plate-track-result/${jobId}`, {
+          responseType: "blob",
+        });
+        const url = URL.createObjectURL(videoRes.data);
+        setTrackVideoUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+        setTrackPlates(job.plates || []);
+        setTrackProgress(100);
+        setTrackStatus("Output is on this screen. Press play if needed.");
+        return;
+      }
+      if (job.status === "error") {
+        throw new Error(job.error || "Tracking failed");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  };
+
+  const runTrackJob = async (startRequest, waitingMessage) => {
+    setTrackBusy(true);
+    resetTrackOutput();
+    setTrackStatus(waitingMessage);
+    try {
+      const startRes = await startRequest();
+      const jobId = startRes.data?.job_id;
+      if (!jobId) throw new Error("Upload failed");
+      setTrackStatus("Tracking plates. Keep this tab open.");
+      await pollTrackJob(jobId);
+    } catch (err) {
+      const message = err.message && !err.response ? err.message : apiError(err, "Tracking failed.");
+      setTrackError(message);
+      setTrackStatus(message);
+    } finally {
+      setTrackBusy(false);
+    }
+  };
+
+  const handleTrackFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setTrackFile(file);
+    setTrackError(null);
+  };
+
+  const handleTrackUpload = async (e) => {
+    e.preventDefault();
+    if (!trackFile) {
+      setTrackStatus("Choose a file, or click Use sample.mp4.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("video", trackFile);
+    await runTrackJob(
+      () =>
+        axiosInstance.post(`/plate-track`, formData),
+      "Uploading your video..."
+    );
+  };
+
+  const handleTrackSample = async () => {
+    await runTrackJob(
+      () => axiosInstance.post(`/plate-track-sample`),
+      "Using sample.mp4..."
+    );
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -207,11 +316,19 @@ export default function PlateSearchPage() {
             License Plate Control Center
           </h1>
           <p className="text-xs text-[#9FBBDA] mt-0.5">
-            Module 3 — Detection, OCR, Tracking &amp; Plate Search
+            Module 3 — Plate tracking (3.3), image scan, and plate search
           </p>
         </div>
 
         <div className="flex bg-[#173A63] p-1 rounded-xl w-full sm:w-auto">
+          <button
+            onClick={() => setActiveTab("track")}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition ${
+              activeTab === "track" ? "bg-[#7BA4D0] text-[#0D2440] shadow-sm" : "text-[#9FBBDA] hover:text-white"
+            }`}
+          >
+            Video Track (3.3)
+          </button>
           <button
             onClick={() => setActiveTab("upload")}
             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition ${
@@ -231,7 +348,103 @@ export default function PlateSearchPage() {
         </div>
       </div>
 
-      {/* TAB 1: IMAGE SCAN */}
+      {/* TAB 1: 3.3 VIDEO TRACK */}
+      {activeTab === "track" && (
+        <div className="bg-white rounded-2xl border border-[#DCE6F2] shadow-sm p-6 space-y-5">
+          <div>
+            <h2 className="text-lg font-bold text-[#0D2440]">Plate-Based Vehicle Tracking (3.3)</h2>
+            <p className="text-xs text-[#5B7699] mt-0.5">
+              Green car corners, red plate box, plate crop + text. Same plate number keeps the same vehicle ID.
+            </p>
+          </div>
+
+          <form onSubmit={handleTrackUpload} className="flex flex-wrap items-center gap-3">
+            <input
+              id="track-video-input"
+              type="file"
+              accept="video/*"
+              onChange={handleTrackFileChange}
+              className="hidden"
+            />
+            <label
+              htmlFor="track-video-input"
+              className="flex-1 min-w-[220px] px-4 py-2.5 border-2 border-dashed border-[#C9D9EC] rounded-xl bg-[#F7FAFD] hover:bg-[#EEF3FA] cursor-pointer text-xs font-semibold text-[#173A63]"
+            >
+              {trackFile ? trackFile.name : "Choose camera video"}
+            </label>
+            <button
+              type="submit"
+              disabled={trackBusy}
+              className="px-5 py-2.5 rounded-xl font-bold text-sm bg-[#2E5E99] text-white shadow-md shadow-[#2E5E99]/30 hover:bg-[#173A63] disabled:bg-[#DCE6F2] disabled:text-[#9FB4CC] disabled:shadow-none disabled:cursor-wait"
+            >
+              {trackBusy ? "Tracking..." : "Upload and track"}
+            </button>
+            <button
+              type="button"
+              onClick={handleTrackSample}
+              disabled={trackBusy}
+              className="px-5 py-2.5 rounded-xl font-bold text-sm bg-[#0D2440] text-white hover:bg-[#173A63] disabled:opacity-50 disabled:cursor-wait"
+            >
+              Use sample.mp4
+            </button>
+          </form>
+
+          <p className="text-xs text-[#5B7699] min-h-5">{trackStatus}</p>
+          <div className="h-2.5 rounded-full bg-[#E7F0FA] border border-[#DCE6F2] overflow-hidden">
+            <span
+              className="block h-full bg-[#2E5E99] transition-[width] duration-200"
+              style={{ width: `${trackProgress}%` }}
+            />
+          </div>
+
+          {trackError && (
+            <div className="p-3 rounded-xl bg-[#FBEAEA] border border-[#F0C6C4] text-[#B3261E] text-xs font-medium">
+              {trackError}
+            </div>
+          )}
+
+          <div className="rounded-xl overflow-hidden border border-[#DCE6F2] bg-[#0D2440] min-h-[280px] flex items-center justify-center">
+            {trackVideoUrl ? (
+              <video
+                src={trackVideoUrl}
+                controls
+                playsInline
+                autoPlay
+                className="w-full bg-black"
+              />
+            ) : (
+              <p className="text-sm text-[#9FBBDA] px-6 py-16 text-center">
+                {trackBusy ? trackStatus : "Output video will appear here"}
+              </p>
+            )}
+          </div>
+
+          {trackVideoUrl && (
+            <a
+              href={trackVideoUrl}
+              download="plate_tracking.mp4"
+              className="inline-block text-sm font-semibold text-[#2E5E99] hover:text-[#0D2440]"
+            >
+              Download output video
+            </a>
+          )}
+
+          {trackPlates.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {trackPlates.map((item) => (
+                <span
+                  key={`${item.id}-${item.plate}`}
+                  className="rounded-full border border-[#DCE6F2] bg-[#E7F0FA] px-3 py-1.5 text-xs font-bold text-[#2E5E99]"
+                >
+                  ID {item.id}: {item.plate}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: IMAGE SCAN */}
       {activeTab === "upload" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-[#DCE6F2] shadow-sm p-6 flex flex-col justify-between">

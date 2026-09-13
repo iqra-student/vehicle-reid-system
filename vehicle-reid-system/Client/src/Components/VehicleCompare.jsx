@@ -214,7 +214,7 @@ export default function VehicleReIDEngine() {
     payloadBuilder(formData);
 
     try {
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+      const response = await fetch(`http://127.0.0.1:8001${endpoint}`, {
         method: 'POST',
         body: formData,
       });
@@ -298,7 +298,7 @@ const handleFindMatch = async () => {
           matchedFilename: m.matched_filename,
           confidence: m.confidence,
           confidencePercentage: m.confidencePercentage,
-          matchedImageUrl: `http://localhost:8000/gallery/${m.matched_filename}`,
+          matchedImageUrl: `http://127.0.0.1:8001/gallery/${m.matched_filename}`,
         })),
       });
     }

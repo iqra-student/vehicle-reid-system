@@ -32,11 +32,11 @@ io.on('connection', (socket) => {
   });
 });
 
-// Middleware
-app.use(express.json());
+// Do not parse JSON before the ML proxy. express.json() consumes the
+// request body, and http-proxy-middleware then hangs or returns 504.
 app.use(cors());
 
-const ML_SERVICE_URL = 'http://127.0.0.1:8001';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
 
 // ==========================================
 // Raw proxy to FastAPI
@@ -48,32 +48,49 @@ const ML_SERVICE_URL = 'http://127.0.0.1:8001';
 // deliberately NOT in this list because they are
 // handled by detectionRoutes.js.
 app.use(
-  ['/api/compare', '/api/compare-video-streams'],
+  [
+    '/api/compare',
+    '/api/compare-video-streams',
+    '/api/plate-track-sample',
+    '/api/plate-track-status',
+    '/api/plate-track-result',
+    '/api/plate-track',
+  ],
   createProxyMiddleware({
     target: ML_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path, req) => req.originalUrl,
+    pathRewrite: (_path, req) => req.originalUrl,
     proxyTimeout: 20 * 60 * 1000,
     timeout: 20 * 60 * 1000,
+    on: {
+      error: (err, req, res) => {
+        console.error('PROXY ERROR:', err.message);
 
-    onError: (err, req, res) => {
-      console.error('PROXY ERROR:', err.message);
+        if (!res || typeof res.writeHead !== 'function') {
+          return;
+        }
 
-      if (!res.headersSent) {
-        res.writeHead(502, {
-          'Content-Type': 'application/json',
-        });
-      }
+        if (!res.headersSent) {
+          res.writeHead(502, {
+            'Content-Type': 'application/json',
+          });
+        }
 
-      res.end(
-        JSON.stringify({
-          error: 'Proxy error',
-          detail: err.message,
-        })
-      );
+        res.end(
+          JSON.stringify({
+            error: 'ML service unreachable',
+            detail:
+              err.code === 'ECONNREFUSED'
+                ? `Nothing is listening at ${ML_SERVICE_URL}. Start ml_service/main.py on that port.`
+                : err.message,
+          })
+        );
+      },
     },
   })
 );
+
+app.use(express.json());
 
 // ==========================================
 // Route Imports & Mounting

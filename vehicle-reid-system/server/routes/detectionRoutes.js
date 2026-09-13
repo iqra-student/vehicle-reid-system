@@ -298,9 +298,16 @@ router.post('/compare-videos', upload.fields([{ name: 'video1' }, { name: 'video
     formData.append('video2', fs.createReadStream(video2.path), video2.originalname);
 
     // Call FastAPI's video stream endpoint instead of the single-image /compare endpoint
-    const response = await axios.post('http://localhost:8000/compare-video-streams', formData, {
-      headers: formData.getHeaders(),
-    });
+    const response = await axios.post(
+      "http://127.0.0.1:8001/api/compare-video-streams",
+      formData,
+      {
+        headers: formData.getHeaders(),
+        timeout: 20 * 60 * 1000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      }
+    );
 
     // Cleanup temporary uploaded files
     fs.unlinkSync(video1.path);

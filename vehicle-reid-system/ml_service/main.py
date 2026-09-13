@@ -894,6 +894,7 @@ import torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
 from fastapi import FastAPI, APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from ultralytics import YOLO
 from torchvision import transforms
@@ -914,6 +915,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 from anpr import read_plate
+import section_3_3 as plate_track
 
 
 # ============================================================
@@ -2175,6 +2177,79 @@ async def plate_detect(
 
 
 # ============================================================
+# MODULE 3.3 - PLATE-BASED VIDEO TRACKING
+# ============================================================
+
+@api_router.post("/plate-track")
+async def plate_track_upload(video: UploadFile = File(...)):
+    if not video.filename:
+        raise HTTPException(status_code=400, detail="Upload a camera video first")
+
+    suffix = os.path.splitext(video.filename)[1] or ".mp4"
+    in_path = os.path.join(plate_track.RESULTS_DIR, f"{os.urandom(8).hex()}_in{suffix}")
+    try:
+        contents = await video.read()
+        if len(contents) > plate_track.MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail="Video is too large. Use a file under 40 MB.",
+            )
+        with open(in_path, "wb") as handle:
+            handle.write(contents)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=plate_track.disk_error(exc)) from exc
+
+    return {"job_id": plate_track.launch_job(in_path, delete_input=True)}
+
+
+@api_router.post("/plate-track-sample")
+async def plate_track_sample():
+    sample = os.path.join(plate_track.ROOT, "sample.mp4")
+    if not os.path.exists(sample):
+        raise HTTPException(
+            status_code=404,
+            detail="sample.mp4 is missing next to section_3_3.py",
+        )
+    return {"job_id": plate_track.launch_job(sample, delete_input=False)}
+
+
+@api_router.get("/plate-track-status/{job_id}")
+async def plate_track_status(job_id: str):
+    with plate_track.jobs_lock:
+        job = plate_track.jobs.get(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Unknown job")
+        done = job["status"] == "done"
+        return {
+            "status": job["status"],
+            "frame": job["frame"],
+            "total": job["total"],
+            "message": job["message"],
+            "plates": job.get("plates") or [],
+            "error": job.get("error"),
+            "video_url": f"/api/plate-track-result/{job_id}" if done else None,
+        }
+
+
+@api_router.get("/plate-track-result/{job_id}")
+async def plate_track_result(job_id: str):
+    with plate_track.jobs_lock:
+        job = plate_track.jobs.get(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Unknown job")
+        if job["status"] != "done":
+            raise HTTPException(status_code=400, detail="Still processing")
+        out_path = job["output"]
+    if not os.path.exists(out_path):
+        raise HTTPException(status_code=404, detail="Result video missing")
+    return FileResponse(
+        out_path,
+        media_type="video/mp4",
+        filename="plate_tracking.mp4",
+    )
+
+
+# ============================================================
 # MODULE 2 - IMAGE-TO-IMAGE COMPARE
 # ============================================================
 
@@ -2882,5 +2957,5 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="127.0.0.1",
-        port=8001
+        port=int(os.environ.get("ML_PORT", "8001")),
     )

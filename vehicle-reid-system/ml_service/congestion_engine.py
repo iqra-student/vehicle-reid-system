@@ -188,5 +188,5 @@ class CongestionEngine:
             "processed_frames": frame_idx,
             "total_video_duration_sec": current_time_sec if frame_idx > 0 else 0,
             "congestion_events_triggered": events_log,
-            "annotated_video_url": f"http://localhost:8000/{annotated_path}" if annotated_path else None
+            "annotated_video_url": f"http://127.0.0.1:8001/{annotated_path}" if annotated_path else None
         }

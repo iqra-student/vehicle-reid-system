@@ -4,9 +4,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
 
 const axiosInstance = axios.create({
   baseURL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  timeout: 20 * 60 * 1000,
 });
 
 // Attach JWT token (if present) to every outgoing request
@@ -15,6 +13,14 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // FormData must keep the browser-generated multipart boundary.
+    // A default application/json Content-Type makes FastAPI hang on
+    // /plate-track until the Node proxy returns 504.
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    } else if (!config.headers["Content-Type"]) {
+      config.headers["Content-Type"] = "application/json";
     }
     return config;
   },

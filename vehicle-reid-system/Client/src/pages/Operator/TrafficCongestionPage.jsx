@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 
 const BACKEND_URL = 'http://localhost:5000';
-const ML_SERVICE_URL = 'http://localhost:8000';
+const ML_SERVICE_URL = 'http://127.0.0.1:8001';
 
 export default function TrafficCongestionPage() {
   const [alerts, setAlerts] = useState([]);
@@ -125,7 +125,7 @@ export default function TrafficCongestionPage() {
       }
     } catch (err) {
       console.error('Processing error:', err);
-      setProcessingStatus('Analysis failed. Verify FastAPI ML service is running on port 8000.');
+      setProcessingStatus('Analysis failed. Verify FastAPI ML service is running on port 8001.');
     } finally {
       setIsProcessing(false);
     }
