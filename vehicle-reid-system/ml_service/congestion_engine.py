@@ -11,17 +11,17 @@ class CongestionEngine:
         self,
         model_path="yolov8n.pt",
         node_backend_url="http://localhost:5000/api/congestion/log",
-        speed_threshold_px=2.0,        # < 2.0 px/sec = completely stopped
-        stationary_ratio_thresh=0.65,  # 65% of vehicles must be stopped for gridlock
-        density_threshold=6,           # Minimum 6 vehicles in frame
-        hold_time_sec=10.0,            # Must persist for 10+ seconds
-        grace_period_sec=15.0
+        speed_threshold_px=15.0,        # < 15 px/s counts as congested/crawling
+        stationary_ratio_thresh=0.35,  # 35% of detected vehicles bottlenecked
+        density_threshold=3,           # Minimum 3 vehicles in frame
+        hold_time_sec=2.0,             # Sustained for 2.0 seconds
+        grace_period_sec=5.0
     ):
         self.model = YOLO(model_path)
         self.backend_url = node_backend_url
         self.vehicle_classes = [2, 3, 5, 7]  # Car, Motorcycle, Bus, Truck
 
-        # Thresholds
+        # Calibrated Thresholds
         self.speed_threshold_px = speed_threshold_px
         self.stationary_ratio_thresh = stationary_ratio_thresh
         self.density_threshold = density_threshold
@@ -48,6 +48,12 @@ class CongestionEngine:
         camera_id: str = "CAM_01",
         save_annotated=True
     ):
+        # Reset internal tracking state for every execution
+        self.track_history = {}
+        self.congestion_start_time = None
+        self.last_gridlock_detected_time = None
+        self.alert_dispatched = False
+
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -149,7 +155,7 @@ class CongestionEngine:
                     self.congestion_start_time = None
                     self.alert_dispatched = False
 
-            # --- Visual Annotations (Clean Bounding Boxes & HUD only) ---
+            # Visual Annotations
             for (x1, y1, x2, y2, track_id, is_stat, spd) in detected_boxes_info:
                 box_color = (0, 0, 255) if is_stat else (0, 255, 120)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), box_color, 2)
@@ -159,7 +165,7 @@ class CongestionEngine:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, box_color, 1, cv2.LINE_AA
                 )
 
-            # Sleek Top HUD
+            # HUD Display
             status_text = "ALERT: GRIDLOCK" if is_gridlock_frame else "FLOW: NORMAL / SLOW"
             status_color = (0, 0, 255) if is_gridlock_frame else (0, 220, 0)
 
@@ -188,5 +194,5 @@ class CongestionEngine:
             "processed_frames": frame_idx,
             "total_video_duration_sec": current_time_sec if frame_idx > 0 else 0,
             "congestion_events_triggered": events_log,
-            "annotated_video_url": f"http://127.0.0.1:8001/{annotated_path}" if annotated_path else None
+            "annotated_video_url": f"http://127.0.0.1:8000/{annotated_path}" if annotated_path else None
         }

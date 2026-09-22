@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
 // request body, and http-proxy-middleware then hangs or returns 504.
 app.use(cors());
 
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
+const ML_SERVICE_URL = 'http://127.0.0.1:8000';
 
 // ==========================================
 // Raw proxy to FastAPI
@@ -44,13 +44,9 @@ const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
 // ONLY for routes that have no Node-side logic
 // of their own.
 //
-// /api/plate-detect and /api/compare-videos are
-// deliberately NOT in this list because they are
-// handled by detectionRoutes.js.
+
 app.use(
   [
-    '/api/compare',
-    '/api/compare-video-streams',
     '/api/plate-track-sample',
     '/api/plate-track-status',
     '/api/plate-track-result',
