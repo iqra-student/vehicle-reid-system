@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import re
 import cv2
 import numpy as np
 import torch
@@ -14,6 +15,29 @@ from ultralytics import YOLO
 # Import CongestionEngine from Module 4
 from congestion_engine import CongestionEngine
 
+# ----------------- APP INITIALIZATION -----------------
+app = FastAPI(title="Smart City Surveillance - Re-ID & Congestion Engine")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+os.makedirs("static/matches", exist_ok=True)
+os.makedirs("static/debug", exist_ok=True)
+os.makedirs("static/annotated", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+veri_gallery_dir = r"C:\Users\tayya\Documents\FYP\archive (1)\VeRi\image_test"
+if os.path.exists(veri_gallery_dir):
+    app.mount("/gallery", StaticFiles(directory=veri_gallery_dir), name="gallery")
+
+device_type = "cuda" if torch.cuda.is_available() else "cpu"
+
+# ----------------- MODULE 2: CLIP-ReID & PAIR CLASSIFIER SETUP -----------------
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "clip_reid"))
 from model.make_model import make_model
 from config import cfg_base as cfg
@@ -21,22 +45,40 @@ from torchvision import transforms
 from PIL import Image
 from pair_classifier import PairClassifier
 
-device_type = "cpu"
-
-cfg.merge_from_file(os.path.join(os.path.dirname(__file__), "clip_reid", "configs", "veri", "vit_base.yml"))
-cfg.freeze()
+config_path = os.path.join(os.path.dirname(__file__), "clip_reid", "configs", "veri", "vit_base.yml")
+if os.path.exists(config_path):
+    cfg.merge_from_file(config_path)
+    cfg.freeze()
 
 clip_model = make_model(cfg, num_class=576, camera_num=20, view_num=8)
-clip_model.load_state_dict(torch.load("weights/ViT-B-16_60.pth", map_location=device_type))
+vit_weights = os.path.join(os.path.dirname(__file__), "weights", "ViT-B-16_60.pth")
+if os.path.exists(vit_weights):
+    clip_model.load_state_dict(torch.load(vit_weights, map_location=device_type))
+    print("[Module 2] Loaded ViT-B-16_60 weights.")
+else:
+    print(f"[Module 2 Warning] '{vit_weights}' not found. Initialized with base weights.")
 clip_model.to(device_type)
 clip_model.eval()
 
-gallery_data = np.load("gallery_embeddings.npz")
-gallery_embeddings = gallery_data["embeddings"]
-gallery_filenames = gallery_data["filenames"]
+# Load Gallery Embeddings if present
+gallery_embeddings = []
+gallery_filenames = []
+gallery_path = os.path.join(os.path.dirname(__file__), "gallery_embeddings.npz")
+if os.path.exists(gallery_path):
+    gallery_data = np.load(gallery_path)
+    gallery_embeddings = gallery_data["embeddings"]
+    gallery_filenames = gallery_data["filenames"]
+    print(f"[Module 2] Loaded gallery with {len(gallery_filenames)} records.")
+else:
+    print(f"[Module 2 Warning] '{gallery_path}' not found.")
 
 classifier = PairClassifier(input_dim=1280)
-classifier.load_state_dict(torch.load("weights/pair_classifier_full.pth", map_location=device_type))
+pair_weights = os.path.join(os.path.dirname(__file__), "weights", "pair_classifier_full.pth")
+if os.path.exists(pair_weights):
+    classifier.load_state_dict(torch.load(pair_weights, map_location=device_type))
+    print("[Module 2] Loaded pair_classifier_full weights.")
+else:
+    print(f"[Module 2 Warning] '{pair_weights}' not found. Using initialized classifier.")
 classifier.to(device_type)
 classifier.eval()
 
@@ -52,28 +94,15 @@ def extract_clip_embedding(img_path):
     with torch.no_grad():
         feat = clip_model(img_t)
     return feat.cpu().numpy()[0]  # 1280-dim
+
+# ----------------- MODULE 2: RESNET FEATURE EXTRACTOR SETUP -----------------
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "deep-person-reid"))
 from torchreid.utils import FeatureExtractor
 
-app = FastAPI(title="Smart City Surveillance - Re-ID & Congestion Engine")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-os.makedirs("static/matches", exist_ok=True)
-os.makedirs("static/debug", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-device_type = "cuda" if torch.cuda.is_available() else "cpu"
-
+resnet_weights = os.path.join(os.path.dirname(__file__), "weights", "model_final.pth")
 extractor = FeatureExtractor(
     model_name="resnet50",
-    model_path="weights/model_final.pth",
+    model_path=resnet_weights if os.path.exists(resnet_weights) else None,
     device=device_type
 )
 
@@ -387,27 +416,12 @@ def hungarian_match(cam1_detections, cam2_detections):
             })
     return matches
 
-app = FastAPI(title="Vehicle Re-ID Engine - Module 2")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-os.makedirs("static/matches", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-# app.mount("/static/gallery", StaticFiles(directory=r"C:\Users\tayya\Documents\FYP\archive (1)\VeRi\image_test"), name="gallery")
-app.mount("/gallery", StaticFiles(directory=r"C:\Users\tayya\Documents\FYP\archive (1)\VeRi\image_test"), name="gallery")
-
 # ----------------- MODULE 4 ENDPOINTS -----------------
 @app.post("/detect-congestion")
 async def detect_congestion_endpoint(
     video: UploadFile = File(...),
     camera_id: str = Form("CAM_01"),
-    hold_time_sec: float = Form(10.0)  # Default 10s for testing (Use 300.0 in prod)
+    hold_time_sec: float = Form(2.0)
 ):
     temp_video_path = f"temp_congestion_{video.filename}"
     with open(temp_video_path, "wb") as buffer:
@@ -569,14 +583,15 @@ async def compare_video_streams(video1: UploadFile = File(...), video2: UploadFi
             if os.path.exists(temp_f):
                 os.remove(temp_f)
 
-import re
-
 def parse_camera_id(filename):
     match = re.search(r'_c(\d+)_', filename)
     return match.group(1) if match else None
 
 @app.post("/find-match")
 async def find_match(file: UploadFile = File(...), exclude_same_camera: bool = Form(True)):
+    if len(gallery_embeddings) == 0:
+        raise HTTPException(status_code=400, detail="Gallery embeddings are not loaded.")
+
     path = f"temp_query_{file.filename}"
     with open(path, "wb") as b:
         shutil.copyfileobj(file.file, b)
@@ -618,6 +633,7 @@ async def find_match(file: UploadFile = File(...), exclude_same_camera: bool = F
     finally:
         if os.path.exists(path):
             os.remove(path)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
