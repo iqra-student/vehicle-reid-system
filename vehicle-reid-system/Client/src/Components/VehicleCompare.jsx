@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 /* =========================
    Icons
 ========================= */
@@ -46,11 +45,11 @@ const UploadTile = ({ file, preview, onChange, label }) => {
       style={{
         display: "block",
         cursor: "pointer",
-        border: "1px dashed #475569",
+        border: preview ? "1px solid #0b152d" : "1px dashed #cbd5e1",
         borderRadius: "12px",
         minHeight: "220px",
         overflow: "hidden",
-        background: "#0f172a",
+        background: "#f8fafc",
         transition: "border-color 0.2s ease",
       }}
     >
@@ -76,7 +75,7 @@ const UploadTile = ({ file, preview, onChange, label }) => {
               width: "100%",
               height: "100%",
               objectFit: "contain",
-              background: "#020617",
+              background: "#f1f5f9",
             }}
           />
 
@@ -87,8 +86,9 @@ const UploadTile = ({ file, preview, onChange, label }) => {
               left: 0,
               right: 0,
               padding: "10px 12px",
-              background: "rgba(2, 6, 23, 0.9)",
-              color: "#e2e8f0",
+              background: "rgba(255, 255, 255, 0.92)",
+              borderTop: "1px solid #e2e8f0",
+              color: "#1e293b",
               fontSize: "12px",
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -116,7 +116,7 @@ const UploadTile = ({ file, preview, onChange, label }) => {
             style={{
               fontSize: "14px",
               fontWeight: 600,
-              color: "#cbd5e1",
+              color: "#334155",
             }}
           >
             {label}
@@ -136,22 +136,28 @@ const UploadTile = ({ file, preview, onChange, label }) => {
   );
 };
 
-const TierBadge = ({ confidence }) => {
+const TierBadge = ({ confidence, threshold }) => {
   const value = Number(confidence) || 0;
+  const thresholdFraction = (Number(threshold) || 0) / 100;
 
-  let label = "LOW";
-  let background = "#334155";
-  let color = "#cbd5e1";
+  let label = "Unlikely";
+  let background = "#fee2e2";
+  let color = "#dc2626";
 
-  if (value >= 0.85) {
+  if (value >= 0.9) {
     label = "HIGH";
-    background = "rgba(34, 197, 94, 0.15)";
-    color = "#4ade80";
-  } else if (value >= 0.5) {
+    background = "rgba(34, 197, 94, 0.12)";
+    color = "#16a34a";
+  } else if (value >= 0.7) {
+    label = "LIKELY";
+    background = "rgba(59, 130, 246, 0.12)";
+    color = "#2563eb";
+  } else if (value >= thresholdFraction) {
     label = "POSSIBLE";
     background = "rgba(234, 179, 8, 0.15)";
-    color = "#facc15";
+    color = "#b45309";
   }
+  // anything below thresholdFraction stays "Unlikely"
 
   return (
     <span
@@ -172,10 +178,43 @@ const TierBadge = ({ confidence }) => {
   );
 };
 
+const SectionTitle = ({ icon, children }) => (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      marginBottom: "16px",
+    }}
+  >
+    {icon && <span style={{ color: "#030f29", display: "flex" }}>{icon}</span>}
+    {!icon && (
+      <span
+        style={{
+          width: "8px",
+          height: "8px",
+          borderRadius: "999px",
+          background: "#101a2f",
+        }}
+      />
+    )}
+    <h2
+      style={{
+        margin: 0,
+        fontSize: "15px",
+        fontWeight: 700,
+        color: "#0f172a",
+      }}
+    >
+      {children}
+    </h2>
+  </div>
+);
+
 /* =========================
    Filename Parser
 ========================= */
-
+const API_BASE = "https://womanly-catrigged-ola.ngrok-free.dev"; // replace with your actual ngrok URL
 const parseVehicleFilename = (filename = "") => {
   const match = filename.match(/^(\d+)_c(\d+)_(\d+)_\d+\.jpg$/i);
 
@@ -204,13 +243,10 @@ const VehicleReIDEngine = () => {
 
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchResult, setMatchResult] = useState(null);
+  const [matchElapsed, setMatchElapsed] = useState(null);
 
   const [camSort, setCamSort] = useState("score");
-
-  /* =========================
-     Query Image Handler
-  ========================= */
-
+const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-controlled
   const handleQueryFileChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -230,72 +266,83 @@ const VehicleReIDEngine = () => {
     setQueryPreview(previewUrl);
   };
 
-  /* =========================
-     Find Match
-  ========================= */
+ const handleFindMatch = async () => {
+  if (!queryFile) {
+    alert("Please upload a query image first.");
+    return;
+  }
 
-  const handleFindMatch = async () => {
-    if (!queryFile) {
-      alert("Please upload a query image first.");
-      return;
+  setMatchLoading(true);
+  setMatchResult(null);
+  setMatchElapsed(null);
+
+  const startTime = performance.now();
+
+  try {
+    const formData = new FormData();
+    formData.append("file", queryFile);
+
+    const response = await fetch(`${API_BASE}/find-match`, {
+      method: "POST",
+      headers: { "ngrok-skip-browser-warning": "true" },
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const errorMessage =
+        typeof data.detail === "string"
+          ? data.detail
+          : data.message || "Find Match request failed.";
+
+      throw new Error(errorMessage);
     }
 
-    setMatchLoading(true);
-    setMatchResult(null);
+    const elapsed = data.elapsed_seconds ?? (performance.now() - startTime) / 1000;
+    setMatchElapsed(elapsed);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", queryFile);
+    const matches = Array.isArray(data.matches) ? data.matches : [];
 
-      const response = await fetch(
-        "http://127.0.0.1:8000/find-match",
-        {
-          method: "POST",
-          body: formData,
+    const matchesWithImages = await Promise.all(
+      matches.map(async (match) => {
+        const imageUrl = `${API_BASE}/gallery/${encodeURIComponent(match.matched_filename)}`;
+        let blobUrl = null;
+
+        try {
+          const imgRes = await fetch(imageUrl, {
+            headers: { "ngrok-skip-browser-warning": "true" },
+          });
+          const blob = await imgRes.blob();
+          blobUrl = URL.createObjectURL(blob);
+        } catch (err) {
+          console.error("Image fetch failed:", err);
         }
-      );
 
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const errorMessage =
-          typeof data.detail === "string"
-            ? data.detail
-            : data.message || "Find Match request failed.";
-
-        throw new Error(errorMessage);
-      }
-
-      const matches = Array.isArray(data.matches)
-        ? data.matches
-        : [];
-
-      setMatchResult({
-        queryFilename: queryFile.name,
-        queryCamera: data.query_camera,
-        matches: matches.map((match) => ({
+        return {
           camera: match.camera,
           matchedFilename: match.matched_filename,
           confidence: Number(match.confidence) || 0,
           confidencePercentage:
             match.confidencePercentage ??
             `${((Number(match.confidence) || 0) * 100).toFixed(1)}%`,
-          matchedImageUrl: `http://127.0.0.1:8000/gallery/${encodeURIComponent(
-            match.matched_filename
-          )}`,
-        })),
-      });
-    } catch (error) {
-      console.error("Find Match error:", error);
-      alert(error.message || "Unable to find a matching vehicle.");
-    } finally {
-      setMatchLoading(false);
-    }
-  };
+          matchedImageUrl: blobUrl,
+        };
+      })
+    );
 
-  /* =========================
-     Reset
-  ========================= */
+    setMatchResult({
+      queryFilename: queryFile.name,
+      queryCamera: data.query_camera,
+      matches: matchesWithImages,
+    });
+  } catch (error) {
+    console.error("Find Match error:", error);
+    alert(error.message || "Unable to find a matching vehicle.");
+  } finally {
+    setMatchLoading(false);
+  }
+};
 
   const clearResults = () => {
     setQueryFile(null);
@@ -303,10 +350,6 @@ const VehicleReIDEngine = () => {
     setMatchResult(null);
     setCamSort("score");
   };
-
-  /* =========================
-     Sorted Matches
-  ========================= */
 
   const sortedMatches = matchResult?.matches
     ? [...matchResult.matches].sort((a, b) => {
@@ -318,108 +361,30 @@ const VehicleReIDEngine = () => {
       })
     : [];
 
-  /* =========================
-     UI
-  ========================= */
-
   return (
     <div
       style={{
         width: "100%",
         minHeight: "100%",
-        background: "#020617",
-        color: "#e2e8f0",
+        background: "#ffffff",
+        color: "#1e293b",
         padding: "24px",
         boxSizing: "border-box",
       }}
     >
-      {/* Header */}
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-          gap: "16px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "24px",
-              fontWeight: 700,
-              color: "#f8fafc",
-            }}
-          >
-            Vehicle Re-ID
-          </h1>
-
-          <p
-            style={{
-              margin: "6px 0 0",
-              color: "#64748b",
-              fontSize: "13px",
-            }}
-          >
-            Find matching vehicles across the gallery using CLIP-ReID.
-          </p>
-        </div>
-
-        {matchResult && (
-          <button
-            type="button"
-            onClick={clearResults}
-            style={{
-              border: "1px solid #334155",
-              background: "#0f172a",
-              color: "#cbd5e1",
-              borderRadius: "8px",
-              padding: "9px 14px",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            Reset
-          </button>
-        )}
-      </div>
-
       {/* Upload Section */}
-
       <div
         style={{
-          background: "#0b1120",
-          border: "1px solid #1e293b",
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderTop: "3px solid #0b152d",
           borderRadius: "14px",
           padding: "20px",
           marginBottom: "24px",
+          boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06)",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "16px",
-          }}
-        >
-          <PulseIcon />
-
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "15px",
-              fontWeight: 700,
-              color: "#f1f5f9",
-            }}
-          >
-            Query Vehicle
-          </h2>
-        </div>
+        <SectionTitle icon={<PulseIcon />}>Query Vehicle</SectionTitle>
 
         <UploadTile
           file={queryFile}
@@ -427,18 +392,6 @@ const VehicleReIDEngine = () => {
           onChange={handleQueryFileChange}
           label="Upload vehicle image"
         />
-
-        {queryFile && (
-          <div
-            style={{
-              marginTop: "12px",
-              fontSize: "12px",
-              color: "#64748b",
-            }}
-          >
-            {queryFile.name}
-          </div>
-        )}
 
         <button
           type="button"
@@ -450,39 +403,34 @@ const VehicleReIDEngine = () => {
             padding: "12px 16px",
             border: "none",
             borderRadius: "9px",
-            background:
-              !queryFile || matchLoading
-                ? "#1e293b"
-                : "#2563eb",
-            color:
-              !queryFile || matchLoading
-                ? "#64748b"
-                : "#ffffff",
-            cursor:
-              !queryFile || matchLoading
-                ? "not-allowed"
-                : "pointer",
+            background: !queryFile || matchLoading ? "#e2e8f0" : "#0b152d",
+            color: !queryFile || matchLoading ? "#94a3b8" : "#ffffff",
+            cursor: !queryFile || matchLoading ? "not-allowed" : "pointer",
             fontSize: "13px",
             fontWeight: 700,
           }}
         >
           {matchLoading ? "FINDING MATCH..." : "FIND MATCH"}
         </button>
+        {matchElapsed !== null && (
+  <div style={{ marginTop: "6px", fontSize: "11px", color: "#94a3b8", textAlign: "right" }}>
+    Matched in {matchElapsed.toFixed(2)}s
+  </div>
+)}
       </div>
 
       {/* Results */}
-
       {matchResult && (
         <div
           style={{
-            background: "#0b1120",
-            border: "1px solid #1e293b",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderTop: "3px solid #0b152d",
             borderRadius: "14px",
             padding: "20px",
+            boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06)",
           }}
         >
-          {/* Results Header */}
-
           <div
             style={{
               display: "flex",
@@ -494,20 +442,10 @@ const VehicleReIDEngine = () => {
             }}
           >
             <div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "15px",
-                  fontWeight: 700,
-                  color: "#f1f5f9",
-                }}
-              >
-                Matching Results
-              </h2>
-
+              <SectionTitle>Matching Results</SectionTitle>
               <p
                 style={{
-                  margin: "5px 0 0",
+                  margin: "-10px 0 0 18px",
                   fontSize: "12px",
                   color: "#64748b",
                 }}
@@ -516,26 +454,59 @@ const VehicleReIDEngine = () => {
               </p>
             </div>
 
-            <select
-              value={camSort}
-              onChange={(event) => setCamSort(event.target.value)}
-              style={{
-                background: "#0f172a",
-                color: "#cbd5e1",
-                border: "1px solid #334155",
-                borderRadius: "7px",
-                padding: "8px 10px",
-                fontSize: "12px",
-                outline: "none",
-              }}
-            >
-              <option value="score">Sort by confidence</option>
-              <option value="camera">Sort by camera</option>
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <select
+                value={camSort}
+                onChange={(event) => setCamSort(event.target.value)}
+                style={{
+                  background: "#ffffff",
+                  color: "#0d193a",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "7px",
+                  padding: "8px 10px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  outline: "none",
+                }}
+              >
+                <option value="score">Sort by confidence</option>
+                <option value="camera">Sort by camera</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={clearResults}
+                style={{
+                  border: "1px solid #bfdbfe",
+                  background: "#eff6ff",
+                  color: "#1d4ed8",
+                  borderRadius: "8px",
+                  padding: "9px 14px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                }}
+              >
+                Reset
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+  <span style={{ fontSize: "12px", color: "#64748b" }}>Min confidence:</span>
+  <input
+    type="range"
+    min="0"
+    max="100"
+    value={threshold}
+    onChange={(e) => setThreshold(Number(e.target.value))}
+  />
+  <span style={{ fontSize: "12px", fontWeight: 700, color: "#0b152d" }}>
+    {threshold}%
+  </span>
+</div>
+            </div>
           </div>
 
           {/* Query Information */}
-
           <div
             style={{
               display: "grid",
@@ -546,10 +517,10 @@ const VehicleReIDEngine = () => {
           >
             <div
               style={{
-                border: "1px solid #1e293b",
+                border: "1px solid #bfdbfe",
                 borderRadius: "10px",
                 overflow: "hidden",
-                background: "#020617",
+                background: "#f8fafc",
               }}
             >
               {queryPreview ? (
@@ -569,7 +540,7 @@ const VehicleReIDEngine = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#475569",
+                    color: "#94a3b8",
                     fontSize: "12px",
                   }}
                 >
@@ -589,7 +560,8 @@ const VehicleReIDEngine = () => {
               <div
                 style={{
                   fontSize: "11px",
-                  color: "#64748b",
+                  color: "#0b152d",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -600,7 +572,7 @@ const VehicleReIDEngine = () => {
               <div
                 style={{
                   fontSize: "14px",
-                  color: "#e2e8f0",
+                  color: "#1e293b",
                   fontWeight: 600,
                   wordBreak: "break-word",
                 }}
@@ -613,7 +585,7 @@ const VehicleReIDEngine = () => {
                   <div
                     style={{
                       fontSize: "12px",
-                      color: "#94a3b8",
+                      color: "#64748b",
                     }}
                   >
                     Camera {matchResult.queryCamera}
@@ -623,13 +595,12 @@ const VehicleReIDEngine = () => {
           </div>
 
           {/* Match Cards */}
-
           {sortedMatches.length === 0 ? (
             <div
               style={{
                 padding: "30px",
                 textAlign: "center",
-                border: "1px dashed #334155",
+                border: "1px dashed #cbd5e1",
                 borderRadius: "10px",
                 color: "#64748b",
                 fontSize: "13px",
@@ -641,8 +612,7 @@ const VehicleReIDEngine = () => {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fill, minmax(240px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
                 gap: "16px",
               }}
             >
@@ -653,18 +623,16 @@ const VehicleReIDEngine = () => {
                   <div
                     key={`${match.camera}-${match.matchedFilename}-${index}`}
                     style={{
-                      border: "1px solid #1e293b",
+                      border: "1px solid #e2e8f0",
                       borderRadius: "12px",
                       overflow: "hidden",
-                      background: "#020617",
+                      background: "#ffffff",
                     }}
                   >
-                    {/* Image */}
-
                     <div
                       style={{
                         height: "190px",
-                        background: "#020617",
+                        background: "#f8fafc",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -672,10 +640,7 @@ const VehicleReIDEngine = () => {
                     >
                       <img
                         src={match.matchedImageUrl}
-                        alt={
-                          match.matchedFilename ||
-                          `Camera ${match.camera} match`
-                        }
+                        alt={match.matchedFilename || `Camera ${match.camera} match`}
                         style={{
                           width: "100%",
                           height: "100%",
@@ -687,13 +652,7 @@ const VehicleReIDEngine = () => {
                       />
                     </div>
 
-                    {/* Details */}
-
-                    <div
-                      style={{
-                        padding: "14px",
-                      }}
-                    >
+                    <div style={{ padding: "14px" }}>
                       <div
                         style={{
                           display: "flex",
@@ -705,21 +664,25 @@ const VehicleReIDEngine = () => {
                       >
                         <span
                           style={{
-                            fontSize: "13px",
+                            fontSize: "12px",
                             fontWeight: 700,
-                            color: "#f1f5f9",
+                            color: "#1d4ed8",
+                            background: "#eff6ff",
+                            border: "1px solid #bfdbfe",
+                            padding: "3px 8px",
+                            borderRadius: "999px",
                           }}
                         >
                           Camera {match.camera}
                         </span>
 
-                        <TierBadge confidence={confidence} />
+                        <TierBadge confidence={confidence} threshold={threshold} />
                       </div>
 
                       <div
                         style={{
                           fontSize: "12px",
-                          color: "#94a3b8",
+                          color: "#64748b",
                           marginBottom: "10px",
                           wordBreak: "break-word",
                           lineHeight: 1.5,
@@ -734,15 +697,10 @@ const VehicleReIDEngine = () => {
                           justifyContent: "space-between",
                           alignItems: "center",
                           paddingTop: "10px",
-                          borderTop: "1px solid #1e293b",
+                          borderTop: "1px solid #e2e8f0",
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            color: "#64748b",
-                          }}
-                        >
+                        <span style={{ fontSize: "11px", color: "#64748b" }}>
                           Confidence
                         </span>
 
@@ -750,7 +708,7 @@ const VehicleReIDEngine = () => {
                           style={{
                             fontSize: "15px",
                             fontWeight: 700,
-                            color: "#e2e8f0",
+                            color: "#0b152d",
                           }}
                         >
                           {match.confidencePercentage}
@@ -766,6 +724,8 @@ const VehicleReIDEngine = () => {
       )}
     </div>
   );
+
+
 };
 
 export default VehicleReIDEngine;

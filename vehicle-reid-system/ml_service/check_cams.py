@@ -7,4 +7,4 @@ for n in names:
     m = re.match(r"(\d+)_c(\d+)_", str(n))
     cams[int(m.group(1))].add(int(m.group(2)))
 
-print(sorted(cams[61]))
+print(sorted(cams[108]))

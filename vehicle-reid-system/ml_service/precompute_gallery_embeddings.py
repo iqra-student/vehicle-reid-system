@@ -15,4 +15,4 @@ for fname in os.listdir(GALLERY_DIR):
 np.savez("gallery_embeddings.npz",
          embeddings=np.array(gallery_embeddings),
          filenames=np.array(gallery_filenames))
-print(f"Saved {len(gallery_filenames)} gallery embeddings")
+print(f"Saved {len(gallery_filenames)} gallery embeddings") 

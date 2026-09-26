@@ -7,6 +7,8 @@ import tempfile
 import traceback
 import numpy as np
 import torch
+import time
+from datetime import datetime
 
 from fastapi import (
     FastAPI,
@@ -195,34 +197,34 @@ print("CLIP-ReID model loaded successfully.")
 # LOAD GALLERY EMBEDDINGS
 # ============================================================
 
-gallery_embeddings = np.empty(
-    (0, 1280),
-    dtype=np.float32,
-)
+# gallery_embeddings = np.empty(
+#     (0, 1280),
+#     dtype=np.float32,
+# )
 
-gallery_filenames = np.array([])
+# gallery_filenames = np.array([])
 
-gallery_embeddings_path = os.path.join(
-    BASE_DIR,
-    "gallery_embeddings.npz",
-)
+# gallery_embeddings_path = os.path.join(
+#     BASE_DIR,
+#     "gallery_embeddings.npz",
+# )
 
-if os.path.exists(gallery_embeddings_path):
+# if os.path.exists(gallery_embeddings_path):
 
-    gallery_data = np.load(gallery_embeddings_path)
+#     gallery_data = np.load(gallery_embeddings_path)
 
-    gallery_embeddings = gallery_data["embeddings"]
-    gallery_filenames = gallery_data["filenames"]
+#     gallery_embeddings = gallery_data["embeddings"]
+#     gallery_filenames = gallery_data["filenames"]
 
-    print(
-        f"Loaded {len(gallery_embeddings)} gallery embeddings."
-    )
+#     print(
+#         f"Loaded {len(gallery_embeddings)} gallery embeddings."
+#     )
 
-else:
+# else:
 
-    print(
-        "WARNING: gallery_embeddings.npz not found."
-    )
+#     print(
+#         "WARNING: gallery_embeddings.npz not found."
+#     )
 
 
 # ============================================================
@@ -295,6 +297,23 @@ def extract_clip_embedding(img_path):
 
     return feat.cpu().numpy()[0]
 
+def extract_clip_embeddings_batch(img_paths, batch_size=32):
+    all_embeddings = []
+
+    for start in range(0, len(img_paths), batch_size):
+        batch_paths = img_paths[start:start + batch_size]
+        batch_tensors = [
+            clip_transform(Image.open(p).convert("RGB"))
+            for p in batch_paths
+        ]
+        batch_t = torch.stack(batch_tensors).to(clip_device)
+
+        with torch.no_grad():
+            feats = clip_model(batch_t)
+
+        all_embeddings.append(feats.cpu().numpy())
+
+    return np.concatenate(all_embeddings, axis=0)
 
 # ============================================================
 # YOLO VEHICLE DETECTOR
@@ -662,11 +681,226 @@ def parse_camera_id(filename):
         if match
         else None
     )
-
+def parse_vehicle_id(filename):
+    match = re.match(r"^(\d+)_c\d+_", filename)
+    return match.group(1) if match else None
 
 # ============================================================
 # CLIP-ReID - FIND MATCH
 # ============================================================
+
+# @app.post("/find-match")
+# async def find_match(
+#     file: UploadFile = File(...),
+#     exclude_same_camera: bool = Form(True),
+# ):
+
+#     filename = (
+#         file.filename
+#         or "query_image.jpg"
+#     )
+
+#     suffix = (
+#         os.path.splitext(filename)[1]
+#         or ".jpg"
+#     )
+
+#     temp_fd, path = tempfile.mkstemp(
+#         suffix=suffix,
+#     )
+
+#     try:
+
+#         # ----------------------------------------------------
+#         # Save uploaded query image
+#         # ----------------------------------------------------
+
+#         with os.fdopen(
+#             temp_fd,
+#             "wb",
+#         ) as b:
+
+#             shutil.copyfileobj(
+#                 file.file,
+#                 b,
+#             )
+
+#         # ----------------------------------------------------
+#         # Check gallery
+#         # ----------------------------------------------------
+
+#         if len(gallery_embeddings) == 0:
+
+#             raise HTTPException(
+#                 status_code=503,
+#                 detail="Gallery embeddings are not available.",
+#             )
+
+#         # ----------------------------------------------------
+#         # Extract query CLIP embedding
+#         # ----------------------------------------------------
+
+#         query_emb = extract_clip_embedding(path)
+
+#         HALF = len(query_emb) // 2
+
+#         query_cam = parse_camera_id(filename)
+
+#         # ----------------------------------------------------
+#         # Select gallery images
+#         # ----------------------------------------------------
+
+#         indices = []
+#         cams = []
+
+#         for i, name in enumerate(gallery_filenames):
+
+#             gal_cam = parse_camera_id(
+#                 str(name)
+#             )
+
+#             if gal_cam is None:
+#                 continue
+
+#             if (
+#                 exclude_same_camera
+#                 and query_cam is not None
+#                 and gal_cam == query_cam
+#             ):
+#                 continue
+
+#             indices.append(i)
+#             cams.append(int(gal_cam))
+
+#         if not indices:
+
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No gallery images to search.",
+#             )
+
+#         # ----------------------------------------------------
+#         # Prepare classifier input
+#         # ----------------------------------------------------
+
+#         gal = gallery_embeddings[indices]
+
+#         q_half = np.tile(
+#             query_emb[:HALF],
+#             (len(indices), 1),
+#         )
+
+#         combined = np.concatenate(
+#             [
+#                 q_half,
+#                 gal[:, HALF:],
+#             ],
+#             axis=1,
+#         ).astype(np.float32)
+
+#         # ----------------------------------------------------
+#         # Run pair classifier in batches
+#         # ----------------------------------------------------
+
+#         probs = []
+
+#         with torch.no_grad():
+
+#             for start in range(
+#                 0,
+#                 len(combined),
+#                 1024,
+#             ):
+
+#                 batch = (
+#                     torch.from_numpy(
+#                         combined[
+#                             start:start + 1024
+#                         ]
+#                     )
+#                     .to(clip_device)
+#                 )
+
+#                 p = torch.sigmoid(
+#                     classifier(batch)
+#                 ).view(-1)
+
+#                 probs.append(
+#                     p.cpu().numpy()
+#                 )
+
+#         probs = np.concatenate(probs)
+
+#         # ----------------------------------------------------
+#         # Keep best image for each camera
+#         # ----------------------------------------------------
+
+#         best = {}
+
+#         for idx, cam, prob in zip(
+#             indices,
+#             cams,
+#             probs,
+#         ):
+
+#             prob = float(prob)
+
+#             if (
+#                 cam not in best
+#                 or prob > best[cam][0]
+#             ):
+
+#                 best[cam] = (
+#                     prob,
+#                     str(
+#                         gallery_filenames[idx]
+#                     ),
+#                 )
+
+#         # ----------------------------------------------------
+#         # Format results
+#         # ----------------------------------------------------
+
+#         matches = [
+
+#             {
+#                 "camera": cam,
+#                 "matched_filename": fname,
+#                 "confidence": round(
+#                     score,
+#                     4,
+#                 ),
+#                 "confidencePercentage": (
+#                     f"{round(score * 100, 2)}%"
+#                 ),
+#             }
+
+#             for cam, (
+#                 score,
+#                 fname,
+#             ) in best.items()
+
+#         ]
+
+#         matches.sort(
+#             key=lambda m: m["confidence"],
+#             reverse=True,
+#         )
+
+#         return {
+#             "status": "success",
+#             "query_camera": (
+#                 int(query_cam)
+#                 if query_cam
+#                 else None
+#             ),
+#             "matches": matches,
+#         }
+
+#     finally:
+
+#         if os.path.exists(path):
+#             os.remove(path)
 
 @app.post("/find-match")
 async def find_match(
@@ -674,69 +908,38 @@ async def find_match(
     exclude_same_camera: bool = Form(True),
 ):
 
-    filename = (
-        file.filename
-        or "query_image.jpg"
-    )
-
-    suffix = (
-        os.path.splitext(filename)[1]
-        or ".jpg"
-    )
-
-    temp_fd, path = tempfile.mkstemp(
-        suffix=suffix,
-    )
+    filename = file.filename or "query_image.jpg"
+    start_time = time.time()
+    start_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[MATCH START] {start_dt} — query: {filename}")
+    suffix = os.path.splitext(filename)[1] or ".jpg"
+    temp_fd, path = tempfile.mkstemp(suffix=suffix)
 
     try:
+        with os.fdopen(temp_fd, "wb") as b:
+            shutil.copyfileobj(file.file, b)
 
-        # ----------------------------------------------------
-        # Save uploaded query image
-        # ----------------------------------------------------
+        if not os.path.exists(GALLERY_DIR):
+            raise HTTPException(status_code=503, detail="Test image folder not found.")
 
-        with os.fdopen(
-            temp_fd,
-            "wb",
-        ) as b:
+        test_filenames = [
+            f for f in os.listdir(GALLERY_DIR)
+            if f.lower().endswith((".jpg", ".jpeg", ".png"))
+        ]
 
-            shutil.copyfileobj(
-                file.file,
-                b,
-            )
-
-        # ----------------------------------------------------
-        # Check gallery
-        # ----------------------------------------------------
-
-        if len(gallery_embeddings) == 0:
-
-            raise HTTPException(
-                status_code=503,
-                detail="Gallery embeddings are not available.",
-            )
-
-        # ----------------------------------------------------
-        # Extract query CLIP embedding
-        # ----------------------------------------------------
+        if not test_filenames:
+            raise HTTPException(status_code=404, detail="No images found in test folder.")
 
         query_emb = extract_clip_embedding(path)
-
         HALF = len(query_emb) // 2
-
         query_cam = parse_camera_id(filename)
 
-        # ----------------------------------------------------
-        # Select gallery images
-        # ----------------------------------------------------
-
-        indices = []
+        seen_vehicle_cam = set()
+        selected_filenames = []
         cams = []
 
-        for i, name in enumerate(gallery_filenames):
-
-            gal_cam = parse_camera_id(
-                str(name)
-            )
+        for name in sorted(test_filenames):
+            gal_cam = parse_camera_id(name)
 
             if gal_cam is None:
                 continue
@@ -748,139 +951,72 @@ async def find_match(
             ):
                 continue
 
-            indices.append(i)
+            vehicle_id = parse_vehicle_id(name)
+            dedup_key = (vehicle_id, gal_cam)
+
+            if dedup_key in seen_vehicle_cam:
+                continue  # skip repeat frames of the same vehicle from the same camera
+
+            seen_vehicle_cam.add(dedup_key)
+
+            selected_filenames.append(name)
             cams.append(int(gal_cam))
+        if not selected_filenames:
+            raise HTTPException(status_code=404, detail="No test images to search.")
 
-        if not indices:
+        test_paths = [os.path.join(GALLERY_DIR, n) for n in selected_filenames]
+        test_embeddings = extract_clip_embeddings_batch(test_paths, batch_size=32)
 
-            raise HTTPException(
-                status_code=404,
-                detail="No gallery images to search.",
-            )
-
-        # ----------------------------------------------------
-        # Prepare classifier input
-        # ----------------------------------------------------
-
-        gal = gallery_embeddings[indices]
-
-        q_half = np.tile(
-            query_emb[:HALF],
-            (len(indices), 1),
-        )
+        q_half = np.tile(query_emb[:HALF], (len(selected_filenames), 1))
 
         combined = np.concatenate(
-            [
-                q_half,
-                gal[:, HALF:],
-            ],
+            [q_half, test_embeddings[:, HALF:]],
             axis=1,
         ).astype(np.float32)
-
-        # ----------------------------------------------------
-        # Run pair classifier in batches
-        # ----------------------------------------------------
 
         probs = []
 
         with torch.no_grad():
-
-            for start in range(
-                0,
-                len(combined),
-                1024,
-            ):
-
-                batch = (
-                    torch.from_numpy(
-                        combined[
-                            start:start + 1024
-                        ]
-                    )
-                    .to(clip_device)
-                )
-
-                p = torch.sigmoid(
-                    classifier(batch)
-                ).view(-1)
-
-                probs.append(
-                    p.cpu().numpy()
-                )
+            for start in range(0, len(combined), 1024):
+                batch = torch.from_numpy(combined[start:start + 1024]).to(clip_device)
+                p = torch.sigmoid(classifier(batch)).view(-1)
+                probs.append(p.cpu().numpy())
 
         probs = np.concatenate(probs)
 
-        # ----------------------------------------------------
-        # Keep best image for each camera
-        # ----------------------------------------------------
-
         best = {}
 
-        for idx, cam, prob in zip(
-            indices,
-            cams,
-            probs,
-        ):
-
+        for name, cam, prob in zip(selected_filenames, cams, probs):
             prob = float(prob)
-
-            if (
-                cam not in best
-                or prob > best[cam][0]
-            ):
-
-                best[cam] = (
-                    prob,
-                    str(
-                        gallery_filenames[idx]
-                    ),
-                )
-
-        # ----------------------------------------------------
-        # Format results
-        # ----------------------------------------------------
+            if cam not in best or prob > best[cam][0]:
+                best[cam] = (prob, name)
 
         matches = [
-
             {
                 "camera": cam,
                 "matched_filename": fname,
-                "confidence": round(
-                    score,
-                    4,
-                ),
-                "confidencePercentage": (
-                    f"{round(score * 100, 2)}%"
-                ),
+                "confidence": round(score, 4),
+                "confidencePercentage": f"{round(score * 100, 2)}%",
             }
-
-            for cam, (
-                score,
-                fname,
-            ) in best.items()
-
+            for cam, (score, fname) in best.items()
         ]
 
-        matches.sort(
-            key=lambda m: m["confidence"],
-            reverse=True,
-        )
+        matches.sort(key=lambda m: m["confidence"], reverse=True)
+        
+        end_time = time.time()
+        end_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        elapsed = round(end_time - start_time, 2)
+        print(f"[MATCH END]   {end_dt} — query: {filename} — took {elapsed}s — {len(matches)} matches")
 
         return {
             "status": "success",
-            "query_camera": (
-                int(query_cam)
-                if query_cam
-                else None
-            ),
+            "query_camera": int(query_cam) if query_cam else None,
             "matches": matches,
         }
 
     finally:
-
         if os.path.exists(path):
             os.remove(path)
-
 
 # ============================================================
 # INCLUDE API ROUTER

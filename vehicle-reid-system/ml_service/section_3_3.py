@@ -182,16 +182,14 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
 
 def plate_model_path():
-    for path in (
-        os.path.join(ROOT, "license_plate_detector.pt"),
-        os.path.join(ROOT, "models", "license_plate_detector.pt"),
-    ):
-        if os.path.isfile(path):
-            return path
-    raise FileNotFoundError(
-        "Put license_plate_detector.pt next to section_3_3.py or in a models folder."
-    )
+    path = os.path.join(ROOT, "weights", "license_plate_detector.pt")
 
+    if os.path.isfile(path):
+        return path
+
+    raise FileNotFoundError(
+        f"License plate detector not found at: {path}"
+    )
 
 def load_models():
     global plate_model, coco_model, ocr_reader
