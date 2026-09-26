@@ -1,117 +1,132 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-// POST /api/auth/signup (Creates Operator Accounts)
-router.post('/signup', async (req, res) => {
+// POST /api/auth/signup
+// Creates Operator Accounts
+router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Please fill in all fields" });
+    const normalizedName = name?.trim();
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedName || !normalizedEmail || !password) {
+      return res.status(400).json({
+        message: "Please fill in all fields",
+      });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
+
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists with this email" });
+      return res.status(400).json({
+        message: "User already exists with this email",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Forces role to 'operator'
+    // Public signup always creates an operator
     const user = await User.create({
-      name,
-      email,
+      name: normalizedName,
+      email: normalizedEmail,
       password: hashedPassword,
-      role: 'operator' 
+      role: "operator",
     });
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      {
+        id: user._id,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.status(201).json({ 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
-// POST /api/auth/admin-signup (Creates Admin Accounts - Secret Key Removed)
-router.post('/admin-signup', async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Please fill in all fields" });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists with this email" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'admin'
-    });
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      {
+        expiresIn: "1d",
+      }
     );
 
     res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Signup error:", err);
+
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Please enter email and password" });
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({
+        message: "Please enter email and password",
+      });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      {
+        id: user._id,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      {
+        expiresIn: "1d",
+      }
     );
 
-    res.json({ 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Login error:", err);
+
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 });
 

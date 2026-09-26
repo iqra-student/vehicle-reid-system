@@ -94,12 +94,14 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 const cameraRoutes = require('./routes/cameraRoutes');
 const detectionRoutes = require('./routes/detectionRoutes');
+const adminUserRoutes = require("./routes/adminUsers");
 
 // Module 4 - Congestion Detection
 const congestionRoutes = require('./routes/congestionRoutes')(io);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/cameras', cameraRoutes);
+app.use("/api/admin/users", adminUserRoutes);
 
 // Module 3 / vehicle detection / comparison routes
 app.use('/api', detectionRoutes);

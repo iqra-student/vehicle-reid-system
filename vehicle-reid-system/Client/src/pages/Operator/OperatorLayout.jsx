@@ -45,13 +45,11 @@ export default function OperatorLayout() {
 
   const navItems = [
     { name: "Dashboard", path: "/operator/dashboard", icon: LayoutDashboard },
-    { name: "Live Cameras", path: "/operator/live-monitoring", icon: Video },
     { name: "Vehicle Re-ID", path: "/operator/reid-review", icon: Activity },
     { name: "Plate Search", path: "/operator/plate-search", icon: Search },
     { name: "Vehicle Forensics", path: "/operator/forensics", icon: FileSearch },
     { name: "Convoy Detection", path: "/operator/convoy-detection", icon: Users },
     { name: "Traffic & Congestion", path: "/operator/congestion", icon: Flame },
-    { name: "Camera Management", path: "/operator/camera-management", icon: Camera },
     { name: "Path Visualization", path: "/operator/path-viz", icon: MapPin },
     { name: "Alerts", path: "/operator/alerts", icon: Bell },
     { name: "Reports & Analytics", path: "/operator/reports", icon: BarChart2 },

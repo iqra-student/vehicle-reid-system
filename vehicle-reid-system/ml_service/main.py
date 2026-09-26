@@ -9,6 +9,9 @@ import numpy as np
 import torch
 import time
 from datetime import datetime
+import json
+import xml.etree.ElementTree as ET
+from threading import Lock
 
 from fastapi import (
     FastAPI,
@@ -32,7 +35,109 @@ from PIL import Image
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+GALLERY_DIR = r"C:\Users\tayya\Documents\FYP\archive (1)\VeRi\image_test"
+# ============================================================
+# VERI LABEL MAPS (color/type codes -> real names)
+# ============================================================
 
+COLOR_MAP = {
+    1: "Yellow", 2: "Orange", 3: "Green", 4: "Gray", 5: "Red",
+    6: "Blue", 7: "White", 8: "Golden", 9: "Brown", 10: "Black",
+}
+
+TYPE_MAP = {
+    1: "Sedan", 2: "SUV", 3: "Van", 4: "Hatchback", 5: "MPV",
+    6: "Pickup", 7: "Bus", 8: "Truck", 9: "Estate",
+}
+
+
+def load_veri_labels(xml_path):
+    """Parses test_label.xml into {filename: {vehicle_id, camera_id, color, type}}"""
+    with open(xml_path, "r", encoding="utf-8") as f:
+        xml_data = f.read()
+
+    tree = ET.ElementTree(ET.fromstring(xml_data))
+    root = tree.getroot()
+
+    labels = {}
+
+    for item in root.iter("Item"):
+        image_name = item.get("imageName")
+        vehicle_id = item.get("vehicleID")
+        camera_id = item.get("cameraID")
+        color_id = item.get("colorID")
+        type_id = item.get("typeID")
+
+        labels[image_name] = {
+            "vehicle_id": vehicle_id,
+            "camera_id": camera_id,
+            "color": COLOR_MAP.get(int(color_id), "Unknown") if color_id else "Unknown",
+            "type": TYPE_MAP.get(int(type_id), "Unknown") if type_id else "Unknown",
+        }
+
+    return labels
+
+
+# Load labels once at startup
+VERI_LABEL_PATH = os.path.join(GALLERY_DIR, "test_label.xml")
+# Note: GALLERY_DIR points to image_test folder; test_label.xml sits one level up
+# alongside it. Adjust path if needed:
+VERI_LABEL_PATH = os.path.join(os.path.dirname(GALLERY_DIR), "test_label.xml")
+
+VERI_LABELS = {}
+
+if os.path.exists(VERI_LABEL_PATH):
+    print(f"Loading VeRi labels from: {VERI_LABEL_PATH}")
+    VERI_LABELS = load_veri_labels(VERI_LABEL_PATH)
+    print(f"Loaded {len(VERI_LABELS)} vehicle labels.")
+else:
+    print(f"WARNING: test_label.xml not found at {VERI_LABEL_PATH}")
+
+# ============================================================
+# MATCH LOG (for dashboard stats)
+# ============================================================
+
+MATCH_LOG_PATH = os.path.join(BASE_DIR, "match_log.json")
+match_log_lock = Lock()
+
+
+def append_match_log(query_filename, query_camera, matches):
+    """Appends one /find-match result to match_log.json"""
+    entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "query_filename": query_filename,
+        "query_camera": query_camera,
+        "matches": matches,  # list of {camera, matched_filename, confidence, confidencePercentage}
+    }
+
+    with match_log_lock:
+        logs = []
+        if os.path.exists(MATCH_LOG_PATH):
+            try:
+                with open(MATCH_LOG_PATH, "r") as f:
+                    logs = json.load(f)
+            except (json.JSONDecodeError, FileNotFoundError):
+                logs = []
+
+        logs.append(entry)
+
+        # Keep only the last 500 entries so the file doesn't grow forever
+        logs = logs[-500:]
+
+        with open(MATCH_LOG_PATH, "w") as f:
+            json.dump(logs, f, indent=2)
+
+
+def read_match_log():
+    """Reads all logged match results"""
+    if not os.path.exists(MATCH_LOG_PATH):
+        return []
+    with match_log_lock:
+        try:
+            with open(MATCH_LOG_PATH, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            return []
 
 # ============================================================
 # ANPR
@@ -191,40 +296,6 @@ clip_model.to(clip_device)
 clip_model.eval()
 
 print("CLIP-ReID model loaded successfully.")
-
-
-# ============================================================
-# LOAD GALLERY EMBEDDINGS
-# ============================================================
-
-# gallery_embeddings = np.empty(
-#     (0, 1280),
-#     dtype=np.float32,
-# )
-
-# gallery_filenames = np.array([])
-
-# gallery_embeddings_path = os.path.join(
-#     BASE_DIR,
-#     "gallery_embeddings.npz",
-# )
-
-# if os.path.exists(gallery_embeddings_path):
-
-#     gallery_data = np.load(gallery_embeddings_path)
-
-#     gallery_embeddings = gallery_data["embeddings"]
-#     gallery_filenames = gallery_data["filenames"]
-
-#     print(
-#         f"Loaded {len(gallery_embeddings)} gallery embeddings."
-#     )
-
-# else:
-
-#     print(
-#         "WARNING: gallery_embeddings.npz not found."
-#     )
 
 
 # ============================================================
@@ -689,219 +760,6 @@ def parse_vehicle_id(filename):
 # CLIP-ReID - FIND MATCH
 # ============================================================
 
-# @app.post("/find-match")
-# async def find_match(
-#     file: UploadFile = File(...),
-#     exclude_same_camera: bool = Form(True),
-# ):
-
-#     filename = (
-#         file.filename
-#         or "query_image.jpg"
-#     )
-
-#     suffix = (
-#         os.path.splitext(filename)[1]
-#         or ".jpg"
-#     )
-
-#     temp_fd, path = tempfile.mkstemp(
-#         suffix=suffix,
-#     )
-
-#     try:
-
-#         # ----------------------------------------------------
-#         # Save uploaded query image
-#         # ----------------------------------------------------
-
-#         with os.fdopen(
-#             temp_fd,
-#             "wb",
-#         ) as b:
-
-#             shutil.copyfileobj(
-#                 file.file,
-#                 b,
-#             )
-
-#         # ----------------------------------------------------
-#         # Check gallery
-#         # ----------------------------------------------------
-
-#         if len(gallery_embeddings) == 0:
-
-#             raise HTTPException(
-#                 status_code=503,
-#                 detail="Gallery embeddings are not available.",
-#             )
-
-#         # ----------------------------------------------------
-#         # Extract query CLIP embedding
-#         # ----------------------------------------------------
-
-#         query_emb = extract_clip_embedding(path)
-
-#         HALF = len(query_emb) // 2
-
-#         query_cam = parse_camera_id(filename)
-
-#         # ----------------------------------------------------
-#         # Select gallery images
-#         # ----------------------------------------------------
-
-#         indices = []
-#         cams = []
-
-#         for i, name in enumerate(gallery_filenames):
-
-#             gal_cam = parse_camera_id(
-#                 str(name)
-#             )
-
-#             if gal_cam is None:
-#                 continue
-
-#             if (
-#                 exclude_same_camera
-#                 and query_cam is not None
-#                 and gal_cam == query_cam
-#             ):
-#                 continue
-
-#             indices.append(i)
-#             cams.append(int(gal_cam))
-
-#         if not indices:
-
-#             raise HTTPException(
-#                 status_code=404,
-#                 detail="No gallery images to search.",
-#             )
-
-#         # ----------------------------------------------------
-#         # Prepare classifier input
-#         # ----------------------------------------------------
-
-#         gal = gallery_embeddings[indices]
-
-#         q_half = np.tile(
-#             query_emb[:HALF],
-#             (len(indices), 1),
-#         )
-
-#         combined = np.concatenate(
-#             [
-#                 q_half,
-#                 gal[:, HALF:],
-#             ],
-#             axis=1,
-#         ).astype(np.float32)
-
-#         # ----------------------------------------------------
-#         # Run pair classifier in batches
-#         # ----------------------------------------------------
-
-#         probs = []
-
-#         with torch.no_grad():
-
-#             for start in range(
-#                 0,
-#                 len(combined),
-#                 1024,
-#             ):
-
-#                 batch = (
-#                     torch.from_numpy(
-#                         combined[
-#                             start:start + 1024
-#                         ]
-#                     )
-#                     .to(clip_device)
-#                 )
-
-#                 p = torch.sigmoid(
-#                     classifier(batch)
-#                 ).view(-1)
-
-#                 probs.append(
-#                     p.cpu().numpy()
-#                 )
-
-#         probs = np.concatenate(probs)
-
-#         # ----------------------------------------------------
-#         # Keep best image for each camera
-#         # ----------------------------------------------------
-
-#         best = {}
-
-#         for idx, cam, prob in zip(
-#             indices,
-#             cams,
-#             probs,
-#         ):
-
-#             prob = float(prob)
-
-#             if (
-#                 cam not in best
-#                 or prob > best[cam][0]
-#             ):
-
-#                 best[cam] = (
-#                     prob,
-#                     str(
-#                         gallery_filenames[idx]
-#                     ),
-#                 )
-
-#         # ----------------------------------------------------
-#         # Format results
-#         # ----------------------------------------------------
-
-#         matches = [
-
-#             {
-#                 "camera": cam,
-#                 "matched_filename": fname,
-#                 "confidence": round(
-#                     score,
-#                     4,
-#                 ),
-#                 "confidencePercentage": (
-#                     f"{round(score * 100, 2)}%"
-#                 ),
-#             }
-
-#             for cam, (
-#                 score,
-#                 fname,
-#             ) in best.items()
-
-#         ]
-
-#         matches.sort(
-#             key=lambda m: m["confidence"],
-#             reverse=True,
-#         )
-
-#         return {
-#             "status": "success",
-#             "query_camera": (
-#                 int(query_cam)
-#                 if query_cam
-#                 else None
-#             ),
-#             "matches": matches,
-#         }
-
-#     finally:
-
-#         if os.path.exists(path):
-#             os.remove(path)
-
 @app.post("/find-match")
 async def find_match(
     file: UploadFile = File(...),
@@ -1008,6 +866,13 @@ async def find_match(
         elapsed = round(end_time - start_time, 2)
         print(f"[MATCH END]   {end_dt} — query: {filename} — took {elapsed}s — {len(matches)} matches")
 
+        # Log this match result for the dashboard
+        append_match_log(
+            query_filename=filename,
+            query_camera=int(query_cam) if query_cam else None,
+            matches=matches,
+        )
+        
         return {
             "status": "success",
             "query_camera": int(query_cam) if query_cam else None,
@@ -1018,6 +883,313 @@ async def find_match(
         if os.path.exists(path):
             os.remove(path)
 
+# ============================================================
+# DASHBOARD STATS ENDPOINT
+# ============================================================
+@app.post("/dashboard-log")
+async def dashboard_log(payload: dict):
+    try:
+        query_filename = payload.get("query_filename", "unknown.jpg")
+        query_camera = payload.get("query_camera")
+        matches = payload.get("matches", [])
+
+        append_match_log(
+            query_filename=query_filename,
+            query_camera=query_camera,
+            matches=matches,
+        )
+
+        return {
+            "status": "success",
+            "message": "Dashboard log updated",
+        }
+
+    except Exception as e:
+        print("Dashboard logging error:", e)
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
+    
+# ============================================================
+# DASHBOARD STATS ENDPOINT
+# ============================================================
+
+@app.get("/dashboard-stats")
+async def dashboard_stats():
+    logs = read_match_log()
+
+    # ========================================================
+    # RUNTIME ACTIVE CAMERAS
+    # ========================================================
+    # Do NOT assume VeRi has 20 active cameras.
+    # Count only cameras that actually appear in runtime logs.
+
+    active_camera_ids = set()
+
+    # ========================================================
+    # TOTAL VEHICLES DETECTED
+    # ========================================================
+    # One dashboard-log entry represents one runtime vehicle
+    # detection / Re-ID request.
+
+    vehicles_detected = len(logs)
+
+    # ========================================================
+    # RE-ID CONFIDENCE COUNTS
+    # ========================================================
+
+    high_conf = 0
+    possible_conf = 0
+    unlikely_conf = 0
+
+    # ========================================================
+    # PER-CAMERA DETECTION COUNTS
+    # ========================================================
+
+    camera_counts = {}
+
+    # ========================================================
+    # RECENT VEHICLE SIGHTINGS
+    # ========================================================
+
+    recent_sightings = []
+
+    # ========================================================
+    # PROCESS LOGS
+    # ========================================================
+
+    for entry in reversed(logs):
+
+        # ----------------------------------------------------
+        # QUERY CAMERA
+        # ----------------------------------------------------
+
+        query_cam = entry.get("query_camera")
+
+        if query_cam is not None:
+            camera_key = str(query_cam)
+
+            active_camera_ids.add(camera_key)
+
+            camera_counts[camera_key] = (
+                camera_counts.get(camera_key, 0) + 1
+            )
+
+        # ----------------------------------------------------
+        # TOP RE-ID MATCH
+        # ----------------------------------------------------
+
+        matches = entry.get("matches", [])
+
+        top_match = matches[0] if matches else None
+
+        if not top_match:
+            continue
+
+        # ----------------------------------------------------
+        # MATCH CAMERA
+        # ----------------------------------------------------
+
+        match_camera = top_match.get("camera")
+
+        if match_camera is not None:
+            active_camera_ids.add(str(match_camera))
+
+        # ----------------------------------------------------
+        # CONFIDENCE
+        # ----------------------------------------------------
+
+        conf = top_match.get("confidence", 0)
+
+        try:
+            conf = float(conf)
+        except (TypeError, ValueError):
+            conf = 0.0
+
+        if conf >= 0.85:
+            high_conf += 1
+
+        elif conf >= 0.50:
+            possible_conf += 1
+
+        else:
+            unlikely_conf += 1
+
+        # ----------------------------------------------------
+        # VEHICLE METADATA
+        # ----------------------------------------------------
+
+        matched_filename = top_match.get(
+            "matched_filename",
+            ""
+        )
+
+        label_info = VERI_LABELS.get(
+            matched_filename,
+            {}
+        )
+
+        vehicle_id = label_info.get(
+            "vehicle_id",
+            "Unknown"
+        )
+
+        vehicle_type = label_info.get(
+            "type",
+            "Unknown"
+        )
+
+        vehicle_color = label_info.get(
+            "color",
+            "Unknown"
+        )
+
+        # ----------------------------------------------------
+        # RECENT SIGHTINGS
+        # ----------------------------------------------------
+
+        if len(recent_sightings) < 10:
+
+            recent_sightings.append({
+                "vehicle_id": vehicle_id,
+
+                "camera": (
+                    f"CAM-{match_camera}"
+                    if match_camera is not None
+                    else "Unknown"
+                ),
+
+                "type": vehicle_type,
+
+                "color": vehicle_color,
+
+                "plate": "Pending ANPR",
+
+                "timestamp": entry.get(
+                    "timestamp",
+                    ""
+                ),
+
+                "confidence": top_match.get(
+                    "confidencePercentage",
+                    f"{round(conf * 100, 1)}%"
+                ),
+
+                "confidence_raw": conf,
+
+                "matched_filename": matched_filename,
+            })
+
+    # ========================================================
+    # TOTAL RE-ID RESULTS
+    # ========================================================
+
+    total_reid = (
+        high_conf
+        + possible_conf
+        + unlikely_conf
+    )
+
+    # ========================================================
+    # CONFIDENCE PERCENTAGE
+    # ========================================================
+
+    def pct(count):
+
+        if total_reid == 0:
+            return 0
+
+        return round(
+            (count / total_reid) * 100,
+            1
+        )
+
+    # ========================================================
+    # SORT CAMERAS NUMERICALLY
+    # ========================================================
+
+    detections_per_camera = dict(
+        sorted(
+            camera_counts.items(),
+            key=lambda item: int(item[0])
+            if item[0].isdigit()
+            else item[0]
+        )
+    )
+
+    # ========================================================
+    # RESPONSE
+    # ========================================================
+
+    return {
+
+        "status": "success",
+
+        "stats": {
+
+            # Runtime value.
+            "active_cameras": len(
+                active_camera_ids
+            ),
+
+            "vehicles_detected": (
+                vehicles_detected
+            ),
+
+            "vehicles_reid": (
+                total_reid
+            ),
+
+            # Alerts are not implemented yet.
+            "active_alerts": 0,
+        },
+
+        # ====================================================
+        # RE-ID CONFIDENCE DISTRIBUTION
+        # ====================================================
+
+        "reid_confidence": [
+
+            {
+                "name": "High Confidence",
+                "value": pct(high_conf),
+                "count": high_conf,
+                "color": "#0c4d9e",
+            },
+
+            {
+                "name": "Possible Match",
+                "value": pct(possible_conf),
+                "count": possible_conf,
+                "color": "#4d83be",
+            },
+
+            {
+                "name": "Unlikely",
+                "value": pct(unlikely_conf),
+                "count": unlikely_conf,
+                "color": "#3a7698",
+            },
+        ],
+
+        # ====================================================
+        # VEHICLE DETECTIONS PER CAMERA
+        # ====================================================
+
+        "detections_per_camera": (
+            detections_per_camera
+        ),
+
+        # ====================================================
+        # RECENT VEHICLE SIGHTINGS
+        # ====================================================
+
+        "recent_sightings": (
+            recent_sightings
+        ),
+    }
 # ============================================================
 # INCLUDE API ROUTER
 # ============================================================

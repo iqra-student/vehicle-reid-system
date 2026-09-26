@@ -32,7 +32,7 @@ import PathVisualizationPage from "./pages/Operator/PathVisualizationPage";
 // Active Admin Pages
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminCameraApprovals from "./pages/Admin/AdminCameraApprovals";
-
+import AdminUsers from "./pages/Admin/AdminUsers";
 // Dev / Testing
 import DetectionTest from "./Components/DetectionTest";
 
@@ -121,6 +121,7 @@ export default function App() {
             <Route element={<RoleRoute allowedRoles={["admin"]} />}>
               <Route element={<AdminLayout />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/camera-approvals" element={<AdminCameraApprovals />} />
               </Route>
             </Route>

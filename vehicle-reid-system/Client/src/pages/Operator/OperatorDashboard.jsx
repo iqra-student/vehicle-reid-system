@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Video,
@@ -10,12 +10,69 @@ import {
 } from "lucide-react";
 
 export default function OperatorDashboard() {
-  const stats = [
-    { label: "Active Cameras", value: "12", border: "border-l-[#0D2440]", iconBg: "bg-[#0D2440]", icon: <Video className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Vehicles Detected", value: "45", border: "border-l-[#2E5E99]", iconBg: "bg-[#2E5E99]", icon: <Car className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Vehicles Re-ID", value: "20", border: "border-l-[#7BA4D0]", iconBg: "bg-[#7BA4D0]", icon: <Scan className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
-    { label: "Active Alerts", value: "7", border: "border-l-[#B25C50]", iconBg: "bg-[#0D2440]", icon: <Bell className="w-4 h-4 stroke-white stroke-2 fill-none" /> },
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/dashboard-stats");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard stats");
+        }
+
+        const data = await response.json();
+
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Dashboard stats error:", err);
+        setError("Unable to load dashboard statistics.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+
+    const interval = setInterval(fetchDashboardStats, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+
+    const stats = [
+    {
+      label: "Active Cameras",
+      value: dashboardData?.stats?.active_cameras ?? 0,
+      border: "border-l-[#0D2440]",
+      iconBg: "bg-[#0D2440]",
+      icon: <Video className="w-4 h-4 stroke-white stroke-2 fill-none" />,
+    },
+    {
+      label: "Vehicles Detected",
+      value: dashboardData?.stats?.vehicles_detected ?? 0,
+      border: "border-l-[#2E5E99]",
+      iconBg: "bg-[#2E5E99]",
+      icon: <Car className="w-4 h-4 stroke-white stroke-2 fill-none" />,
+    },
+    {
+      label: "Vehicles Re-ID",
+      value: dashboardData?.stats?.vehicles_reid ?? 0,
+      border: "border-l-[#7BA4D0]",
+      iconBg: "bg-[#7BA4D0]",
+      icon: <Scan className="w-4 h-4 stroke-white stroke-2 fill-none" />,
+    },
+    {
+      label: "Active Alerts",
+      value: dashboardData?.stats?.active_alerts ?? 0,
+      border: "border-l-[#B25C50]",
+      iconBg: "bg-[#0D2440]",
+      icon: <Bell className="w-4 h-4 stroke-white stroke-2 fill-none" />,
+    },
   ];
+
 
   const sightings = [
     { id: "VH-8821", type: "Sedan", color: "White", swatch: "#F4F6F8", plate: "KHI-2847", camera: "CAM-001", timestamp: "14:32:18", confidence: "97.2%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
@@ -25,9 +82,17 @@ export default function OperatorDashboard() {
     { id: "VH-8817", type: "Bus", color: "Yellow", swatch: "#C58A3C", plate: "Not detected", camera: "CAM-006", timestamp: "14:29:45", confidence: "70.3%", confClass: "text-[#C58A3C] bg-[#FBF3E7]" },
   ];
 
-  const bars = [45, 62, 58, 71, 84, 96, 67]; // Mon–Sun vehicle counts
-  const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const peak = Math.max(...bars);
+const cameraDetections = Object.entries(
+  dashboardData?.detections_per_camera ?? {}
+).map(([camera, count]) => ({
+  camera: `CAM-${camera}`,
+  count,
+}));
+
+const peak = Math.max(
+  ...cameraDetections.map((item) => item.count),
+  1
+);
 
   const reidConfidence = [
     { name: "High Confidence", value: 62, count: 211, color: "#0c4d9e" },
@@ -69,27 +134,62 @@ export default function OperatorDashboard() {
             <div>
               <div className="font-display text-sm font-semibold text-[#0D2440] flex items-center gap-2">
                 <BarChart2 className="w-4 h-4 stroke-[#2E5E99] stroke-[1.8] fill-none" />
-                Vehicle Detections — Daily
+                Vehicle Detections — Per Camera
               </div>
               <div className="text-xs text-[#93A2B8] mt-0.5">
-                Day wise count across all online cameras
+                Vehicle detections across runtime cameras
               </div>
             </div>
           </div>
 
-          <div className="flex items-end gap-1.5 p-4 pt-5 min-h-[220px]">
-            {bars.map((h, idx) => (
-              <div
-                key={idx}
-                className={`flex-1 rounded-t transition-all ${
-                  h === peak
-                    ? "bg-gradient-to-b from-[#7BA4D0] to-[#E7F0FA]"
-                    : "bg-gradient-to-b from-[#2E5E99] to-[#E7F0FA]"
-                }`}
-                style={{ height: `${h}%` }}
-              />
-            ))}
-          </div>
+<div className="flex items-end gap-3 p-4 pt-5 min-h-[220px]">
+  {cameraDetections.length > 0 ? (
+    cameraDetections.map((item) => {
+      const height =
+        item.count > 0
+          ? Math.max((item.count / peak) * 100, 8)
+          : 0;
+
+      return (
+        <div
+          key={item.camera}
+          className="flex-1 h-[180px] flex flex-col justify-end items-center"
+        >
+          <div
+            className={`w-full max-w-[90px] rounded-t transition-all ${
+              item.count === peak
+                ? "bg-gradient-to-b from-[#7BA4D0] to-[#E7F0FA]"
+                : "bg-gradient-to-b from-[#2E5E99] to-[#E7F0FA]"
+            }`}
+            style={{
+              height: `${height}%`,
+            }}
+            title={`${item.camera}: ${item.count} detection${
+              item.count !== 1 ? "s" : ""
+            }`}
+          />
+        </div>
+      );
+    })
+  ) : (
+    <div className="w-full h-[180px] flex items-center justify-center">
+      <span className="text-xs text-[#93A2B8]">
+        No vehicle detections yet
+      </span>
+    </div>
+  )}
+</div>
+
+<div className="flex gap-3 px-4 pb-3.5">
+  {cameraDetections.map((item) => (
+    <div
+      key={item.camera}
+      className="flex-1 text-center font-mono text-[8.5px] text-[#93A2B8]"
+    >
+      {item.camera}
+    </div>
+  ))}
+</div>
 
           <div className="flex justify-between px-4 pb-3.5 font-mono text-[8.5px] text-[#93A2B8]">
             <span>00:00</span>

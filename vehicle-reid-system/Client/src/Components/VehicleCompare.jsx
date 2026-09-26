@@ -298,6 +298,41 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
 
       throw new Error(errorMessage);
     }
+        // ----------------------------------------------------
+    // SEND SUCCESSFUL KAGGLE RESULT TO LOCAL DASHBOARD
+    // ----------------------------------------------------
+
+    try {
+      const dashboardResponse = await fetch(
+        "http://127.0.0.1:8000/dashboard-log",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query_filename: queryFile.name,
+            query_camera: data.query_camera,
+            matches: data.matches || [],
+          }),
+        }
+      );
+
+      if (!dashboardResponse.ok) {
+        console.error(
+          "Dashboard logging failed:",
+          await dashboardResponse.text()
+        );
+      } else {
+        console.log("Dashboard log updated successfully.");
+      }
+
+    } catch (dashboardError) {
+      console.error(
+        "Could not update local dashboard:",
+        dashboardError
+      );
+    }
 
     const elapsed = data.elapsed_seconds ?? (performance.now() - startTime) / 1000;
     setMatchElapsed(elapsed);
