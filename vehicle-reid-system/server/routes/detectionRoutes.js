@@ -47,7 +47,7 @@ async function recordPlateSighting({ plateNumber, cameraId, confidence, imageFil
   const withinWindow = secondsSinceLast <= SAME_CAMERA_WINDOW_SECONDS;
 
   // Repeated frame on the same camera, still within the observation window.
-  // Don't pollute the trail GÇö just report it.
+  // Don't pollute the trail Gï¿½ï¿½ just report it.
   if (isSameCamera && withinWindow) {
     return {
       status: "SAME_CAMERA",
@@ -71,7 +71,7 @@ async function recordPlateSighting({ plateNumber, cameraId, confidence, imageFil
 }
 
 // ============================================================
-// MODULE 3.1 - 3.2 (IMAGE) GÇö LICENSE PLATE DETECTION & TRACKING
+// MODULE 3.1 - 3.2 (IMAGE) Gï¿½ï¿½ LICENSE PLATE DETECTION & TRACKING
 //
 // Route renamed from "/plate-detect-image" to "/plate-detect" to match
 // what the frontend (PlateSearchPage.jsx) actually calls via
@@ -79,7 +79,7 @@ async function recordPlateSighting({ plateNumber, cameraId, confidence, imageFil
 // because server.js proxied "/api/plate-detect" straight to the ML
 // service, bypassing this file entirely.
 //
-// multer field renamed from "image" to "file" GÇö the frontend's FormData
+// multer field renamed from "image" to "file" Gï¿½ï¿½ the frontend's FormData
 // appends the upload under the key "file" (formData.append("file", ...)),
 // so upload.single("image") was always leaving req.file undefined.
 // ============================================================
@@ -95,7 +95,7 @@ router.post("/plate-detect", upload.single("file"), async (req, res) => {
     uploadedImagePath = image.path;
 
     // Frontend sends this field as "camera_id" (matches FastAPI's Form
-    // field name), not "cameraId" GÇö check both so neither naming silently
+    // field name), not "cameraId" Gï¿½ï¿½ check both so neither naming silently
     // falls through to "unknown".
     const cameraId = req.body.camera_id?.trim() || req.body.cameraId?.trim() || "unknown";
 
@@ -120,14 +120,9 @@ router.post("/plate-detect", upload.single("file"), async (req, res) => {
     });
     formData.append("camera_id", cameraId);
 
-    // FIX: was pointed at http://127.0.0.1:8000/plate-detect GÇö the ML
-    // service (ml_service/main.py) runs on port 8001 and mounts every
-    // route under /api (api_router = APIRouter(prefix="/api")), so the
-    // real address is /api/plate-detect on 8001. The old URL meant every
-    // request here 500'd against an unreachable/wrong service before it
-    // could even get to the Mongo save below.
+
     const response = await axios.post(
-      "http://127.0.0.1:8001/api/plate-detect",
+      "http://127.0.0.1:8000/api/plate-detect",
       formData,
       {
         headers: { ...formData.getHeaders() },
@@ -210,7 +205,7 @@ router.post("/plate-detect", upload.single("file"), async (req, res) => {
     if (error.response) {
       console.error("FastAPI Status:", error.response.status, error.response.data);
     } else if (error.request) {
-      console.error("FastAPI Server Unreachable at http://127.0.0.1:8001");
+      console.error("FastAPI Server Unreachable at http://127.0.0.1:8000");
     }
 
     return res.status(500).json({
@@ -233,7 +228,7 @@ router.post("/plate-detect", upload.single("file"), async (req, res) => {
 });
 
 // ============================================================
-// MODULE 3.4 GÇö VEHICLE SEARCH BY LICENSE PLATE & CAMERA
+// MODULE 3.4 - VEHICLE SEARCH BY LICENSE PLATE & CAMERA
 // ============================================================
 router.get("/search", async (req, res) => {
   try {
@@ -288,36 +283,5 @@ router.get("/search", async (req, res) => {
   }
 });
 
-router.post('/compare-videos', upload.fields([{ name: 'video1' }, { name: 'video2' }]), async (req, res) => {
-  try {
-    const video1 = req.files['video1'][0];
-    const video2 = req.files['video2'][0];
-
-    const formData = new FormData();
-    formData.append('video1', fs.createReadStream(video1.path), video1.originalname);
-    formData.append('video2', fs.createReadStream(video2.path), video2.originalname);
-
-    // Call FastAPI's video stream endpoint instead of the single-image /compare endpoint
-    const response = await axios.post(
-      "http://127.0.0.1:8001/api/compare-video-streams",
-      formData,
-      {
-        headers: formData.getHeaders(),
-        timeout: 20 * 60 * 1000,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-      }
-    );
-
-    // Cleanup temporary uploaded files
-    fs.unlinkSync(video1.path);
-    fs.unlinkSync(video2.path);
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("Error in vehicle comparison route:", error.message);
-    res.status(500).json({ error: "Failed to compare video streams" });
-  }
-});
 
 module.exports = router;

@@ -145,7 +145,7 @@ export default function ApprovedCamerasPage() {
                 <img
                   src={
                     cam.streamUrl ||
-                    `http://127.0.0.1:8001/api/stream/${cam._id}`
+                    `http://127.0.0.1:8000/api/stream/${cam._id}`
                   }
                   alt={cam.name}
                   className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"

@@ -1,0 +1,80 @@
+import pickle
+import numpy as np
+import pandas as pd
+import random
+from collections import defaultdict
+
+random.seed(42)
+np.random.seed(42)
+
+with open("C:\\Users\\tayya\\Documents\\FYP\\clip_reid_code\\embeddings.pkl", "rb") as f:
+    data = pickle.load(f)
+
+embeddings = data["embeddings"]
+vehicle_ids = data["vehicle_ids"]
+camera_ids = data["camera_ids"]
+
+HALF = embeddings.shape[1] // 2  # 640
+
+vid_to_indices = defaultdict(list)
+for idx, vid in enumerate(vehicle_ids):
+    vid_to_indices[vid].append(idx)
+
+all_vids = list(vid_to_indices.keys())
+
+# ---- Step 1: Generate ALL valid positive pairs ----
+positive_pairs = []
+for vid, indices in vid_to_indices.items():
+    for i in range(len(indices)):
+        for j in range(i + 1, len(indices)):
+            idx1, idx2 = indices[i], indices[j]
+            if camera_ids[idx1] != camera_ids[idx2]:
+                positive_pairs.append((idx1, idx2, vid, vid))
+
+n_positive = len(positive_pairs)
+print(f"Total valid positive pairs: {n_positive}")
+
+# ---- Step 2: Sample matching number of negative pairs ----
+negative_pairs = []
+seen_neg = set()
+while len(negative_pairs) < n_positive:
+    vid1, vid2 = random.sample(all_vids, 2)
+    idx1 = random.choice(vid_to_indices[vid1])
+    idx2 = random.choice(vid_to_indices[vid2])
+    key = (idx1, idx2)
+    if key in seen_neg:
+        continue
+    seen_neg.add(key)
+    negative_pairs.append((idx1, idx2, vid1, vid2))
+
+print(f"Total negative pairs (matched): {len(negative_pairs)}")
+
+# ---- Step 3: Save FULL dataset as .npz (fast — just indices, no string conversion) ----
+all_pairs = positive_pairs + negative_pairs
+labels = np.array([1]*len(positive_pairs) + [0]*len(negative_pairs))
+
+idx1_arr = np.array([p[0] for p in all_pairs])
+idx2_arr = np.array([p[1] for p in all_pairs])
+vid1_arr = np.array([p[2] for p in all_pairs])
+vid2_arr = np.array([p[3] for p in all_pairs])
+
+perm = np.random.permutation(len(all_pairs))
+idx1_arr, idx2_arr, vid1_arr, vid2_arr, labels = idx1_arr[perm], idx2_arr[perm], vid1_arr[perm], vid2_arr[perm], labels[perm]
+
+np.savez("veri776_pairwise_full.npz",
+         idx1=idx1_arr, idx2=idx2_arr,
+         vid1=vid1_arr, vid2=vid2_arr,
+         labels=labels)
+print(f"Saved FULL dataset: {len(all_pairs)} total pairs (as index references, not raw features)")
+
+# ---- Step 4: Small Excel preview (500 rows, human-readable) ----
+preview_rows = []
+for i in range(500):
+    idx1, idx2 = idx1_arr[i], idx2_arr[i]
+    half1_str = ",".join(f"{v:.5f}" for v in embeddings[idx1][:HALF])
+    half2_str = ",".join(f"{v:.5f}" for v in embeddings[idx2][HALF:])
+    preview_rows.append([half1_str, half2_str, vid1_arr[i], vid2_arr[i], camera_ids[idx1], camera_ids[idx2], labels[i]])
+
+preview_df = pd.DataFrame(preview_rows, columns=["image1_features","image2_features","vehicle_id_1","vehicle_id_2","camera_id_1","camera_id_2","label"])
+preview_df.to_excel("veri776_pairwise_preview.xlsx", index=False)
+print("Saved 500-row Excel preview")
