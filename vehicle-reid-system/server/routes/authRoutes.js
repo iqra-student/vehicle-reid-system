@@ -1,3 +1,137 @@
+// const express = require("express");
+// const router = express.Router();
+// const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
+// const User = require("../models/User");
+
+// // POST /api/auth/signup
+// // Creates Operator Accounts
+// router.post("/signup", async (req, res) => {
+//   try {
+//     const { name, email, password } = req.body;
+
+//     const normalizedName = name?.trim();
+//     const normalizedEmail = email?.trim().toLowerCase();
+
+//     if (!normalizedName || !normalizedEmail || !password) {
+//       return res.status(400).json({
+//         message: "Please fill in all fields",
+//       });
+//     }
+
+//     const existingUser = await User.findOne({
+//       email: normalizedEmail,
+//     });
+
+//     if (existingUser) {
+//       return res.status(400).json({
+//         message: "User already exists with this email",
+//       });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     // Public signup always creates an operator
+//     const user = await User.create({
+//       name: normalizedName,
+//       email: normalizedEmail,
+//       password: hashedPassword,
+//       role: "operator",
+//     });
+
+//     const token = jwt.sign(
+//       {
+//         id: user._id,
+//         role: user.role,
+//       },
+//       process.env.JWT_SECRET,
+//       {
+//         expiresIn: "1d",
+//       }
+//     );
+
+//     res.status(201).json({
+//       token,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Signup error:", err);
+
+//     res.status(500).json({
+//       message: "Server error",
+//       error: err.message,
+//     });
+//   }
+// });
+
+// // POST /api/auth/login
+// router.post("/login", async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     const normalizedEmail = email?.trim().toLowerCase();
+
+//     if (!normalizedEmail || !password) {
+//       return res.status(400).json({
+//         message: "Please enter email and password",
+//       });
+//     }
+
+//     const user = await User.findOne({
+//       email: normalizedEmail,
+//     });
+
+//     if (!user) {
+//       return res.status(400).json({
+//         message: "Invalid credentials",
+//       });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+
+//     if (!isMatch) {
+//       return res.status(400).json({
+//         message: "Invalid credentials",
+//       });
+//     }
+
+//     const token = jwt.sign(
+//       {
+//         id: user._id,
+//         role: user.role,
+//       },
+//       process.env.JWT_SECRET,
+//       {
+//         expiresIn: "1d",
+//       }
+//     );
+
+//     res.json({
+//       token,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Login error:", err);
+
+//     res.status(500).json({
+//       message: "Server error",
+//       error: err.message,
+//     });
+//   }
+// });
+
+// module.exports = router;
+
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
@@ -61,6 +195,77 @@ router.post("/signup", async (req, res) => {
     });
   } catch (err) {
     console.error("Signup error:", err);
+
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+  }
+});
+
+// POST /api/auth/admin-signup
+// Creates Admin Accounts
+router.post("/admin-signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const normalizedName = name?.trim();
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedName || !normalizedEmail || !password) {
+      return res.status(400).json({
+        message: "Please fill in all fields",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters",
+      });
+    }
+
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists with this email",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // This route creates an admin (unlike public /signup, which forces "operator")
+    const user = await User.create({
+      name: normalizedName,
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Admin signup error:", err);
 
     res.status(500).json({
       message: "Server error",

@@ -82,6 +82,7 @@ const authRoutes = require('./routes/authRoutes');
 const cameraRoutes = require('./routes/cameraRoutes');
 const detectionRoutes = require('./routes/detectionRoutes');
 const adminUserRoutes = require("./routes/adminUsers");
+const adminPlateRoutes = require("./routes/adminPlates");
 
 // Module 4 - Congestion Detection
 const congestionRoutes = require('./routes/congestionRoutes')(io);
@@ -89,6 +90,7 @@ const congestionRoutes = require('./routes/congestionRoutes')(io);
 app.use('/api/auth', authRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin", adminPlateRoutes);
 
 // Module 3 / vehicle detection / comparison routes
 app.use('/api', detectionRoutes);
