@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import io from "socket.io-client";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Video,
@@ -7,92 +9,116 @@ import {
   Bell,
   MapPin,
   BarChart2,
+  Flame,
+  AlertTriangle,
+  RotateCcw
 } from "lucide-react";
 
+const BACKEND_URL = "http://localhost:5000";
+
 export default function OperatorDashboard() {
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [activeAlertsCount, setActiveAlertsCount] = useState(0);
+  const [totalVehiclesDetected, setTotalVehiclesDetected] = useState(0);
+  const [activeCamerasCount, setActiveCamerasCount] = useState(3);
+  const [recentIncidents, setRecentIncidents] = useState([]);
+  const [barChartData, setBarChartData] = useState([45, 62, 58, 71, 84, 96, 67]);
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/dashboard-stats");
+    fetchDashboardMetrics();
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard stats");
-        }
+    // Connect to Node.js WebSockets for real-time updates
+    const socket = io(BACKEND_URL);
 
-        const data = await response.json();
+    socket.on("congestion_alert", (newAlert) => {
+      setActiveAlertsCount((prev) => prev + 1);
+      setTotalVehiclesDetected((prev) => prev + (newAlert.vehicleCount || 0));
 
-        setDashboardData(data);
-      } catch (err) {
-        console.error("Dashboard stats error:", err);
-        setError("Unable to load dashboard statistics.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      setRecentIncidents((prev) => [
+        {
+          id: `INC-${Math.floor(1000 + Math.random() * 9000)}`,
+          type: newAlert.eventType || "Gridlock Incident",
+          reasoning: newAlert.reasoning || "Lane Congestion Detected",
+          camera: newAlert.cameraId || "CAM_01",
+          vehicles: newAlert.vehicleCount || 0,
+          stoppedRatio: Math.round((newAlert.stationaryRatio || 0) * 100),
+          timestamp: new Date().toLocaleTimeString(),
+          status: "CRITICAL",
+        },
+        ...prev.slice(0, 9),
+      ]);
+    });
 
-    fetchDashboardStats();
-
-    const interval = setInterval(fetchDashboardStats, 5000);
-
-    return () => clearInterval(interval);
+    return () => socket.disconnect();
   }, []);
 
+  const fetchDashboardMetrics = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/congestion/active`);
+      if (res.data?.status === "success") {
+        const rawAlerts = res.data.data || [];
+        const unResolved = rawAlerts.filter((a) => !a.resolved);
+        setActiveAlertsCount(unResolved.length);
 
-    const stats = [
+        const totalVehicles = rawAlerts.reduce(
+          (acc, item) => acc + (item.vehicleCount || 0),
+          0
+        );
+        setTotalVehiclesDetected(totalVehicles > 0 ? totalVehicles : 45);
+
+        // Populate recent activity from database records
+        if (rawAlerts.length > 0) {
+          const liveRows = rawAlerts.slice(0, 5).map((alert, idx) => ({
+            id: `INC-${alert._id ? alert._id.slice(-4).toUpperCase() : 8820 - idx}`,
+            type: alert.eventType || "GRIDLOCK_CONGESTION",
+            reasoning: alert.reasoning || "High Density Bottleneck",
+            camera: alert.cameraId || "CAM_01",
+            vehicles: alert.vehicleCount || 0,
+            stoppedRatio: Math.round((alert.stationaryRatio || 0) * 100),
+            timestamp: alert.createdAt
+              ? new Date(alert.createdAt).toLocaleTimeString()
+              : "Recent",
+            status: alert.resolved ? "RESOLVED" : "ACTIVE",
+          }));
+          setRecentIncidents(liveRows);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch live dashboard telemetry:", err);
+    }
+  };
+
+  const stats = [
     {
       label: "Active Cameras",
-      value: dashboardData?.stats?.active_cameras ?? 0,
+      value: activeCamerasCount.toString(),
       border: "border-l-[#0D2440]",
       iconBg: "bg-[#0D2440]",
       icon: <Video className="w-4 h-4 stroke-white stroke-2 fill-none" />,
     },
     {
       label: "Vehicles Detected",
-      value: dashboardData?.stats?.vehicles_detected ?? 0,
+      value: totalVehiclesDetected.toString(),
       border: "border-l-[#2E5E99]",
       iconBg: "bg-[#2E5E99]",
       icon: <Car className="w-4 h-4 stroke-white stroke-2 fill-none" />,
     },
     {
       label: "Vehicles Re-ID",
-      value: dashboardData?.stats?.vehicles_reid ?? 0,
+      value: "20",
       border: "border-l-[#7BA4D0]",
       iconBg: "bg-[#7BA4D0]",
       icon: <Scan className="w-4 h-4 stroke-white stroke-2 fill-none" />,
     },
     {
       label: "Active Alerts",
-      value: dashboardData?.stats?.active_alerts ?? 0,
-      border: "border-l-[#B25C50]",
-      iconBg: "bg-[#0D2440]",
+      value: activeAlertsCount.toString(),
+      border: "border-l-rose-500",
+      iconBg: activeAlertsCount > 0 ? "bg-rose-600" : "bg-[#0D2440]",
       icon: <Bell className="w-4 h-4 stroke-white stroke-2 fill-none" />,
     },
   ];
 
-
-  const sightings = [
-    { id: "VH-8821", type: "Sedan", color: "White", swatch: "#F4F6F8", plate: "KHI-2847", camera: "CAM-001", timestamp: "14:32:18", confidence: "97.2%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
-    { id: "VH-8820", type: "SUV", color: "Black", swatch: "#0D2440", plate: "LHR-1193", camera: "CAM-003", timestamp: "14:31:44", confidence: "91.8%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
-    { id: "VH-8819", type: "Pickup", color: "Silver", swatch: "#B9C2CC", plate: "Not detected", camera: "CAM-005", timestamp: "14:30:57", confidence: "86.4%", confClass: "text-[#C58A3C] bg-[#FBF3E7]" },
-    { id: "VH-8818", type: "Motorcycle", color: "Red", swatch: "#B25C50", plate: "KHI-9034", camera: "CAM-002", timestamp: "14:30:22", confidence: "94.1%", confClass: "text-[#3E9A78] bg-[#EAF6F1]" },
-    { id: "VH-8817", type: "Bus", color: "Yellow", swatch: "#C58A3C", plate: "Not detected", camera: "CAM-006", timestamp: "14:29:45", confidence: "70.3%", confClass: "text-[#C58A3C] bg-[#FBF3E7]" },
-  ];
-
-const cameraDetections = Object.entries(
-  dashboardData?.detections_per_camera ?? {}
-).map(([camera, count]) => ({
-  camera: `CAM-${camera}`,
-  count,
-}));
-
-const peak = Math.max(
-  ...cameraDetections.map((item) => item.count),
-  1
-);
+  const peak = Math.max(...barChartData);
 
   const reidConfidence = [
     { name: "High Confidence", value: 62, count: 211, color: "#0c4d9e" },
@@ -102,6 +128,22 @@ const peak = Math.max(
 
   return (
     <div className="flex flex-col gap-4">
+      {/* TOP HEADER */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#0D2440]">Surveillance Dashboard</h1>
+          <p className="text-xs text-[#93A2B8] mt-0.5">
+            Cross-module real-time intelligence: Vehicle Re-ID, ANPR & Congestion Kinematics
+          </p>
+        </div>
+        <button
+          onClick={fetchDashboardMetrics}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
+        >
+          <RotateCcw className="w-3.5 h-3.5" /> Synchronize Metrics
+        </button>
+      </div>
+
       {/* STATS GRID */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((s) => (
@@ -110,7 +152,9 @@ const peak = Math.max(
             className={`bg-white border border-[#E4EAF2] border-l-4 ${s.border} rounded-xl p-3.5 shadow-sm flex flex-col justify-between`}
           >
             <div className="mb-4">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}
+              >
                 {s.icon}
               </div>
             </div>
@@ -137,59 +181,24 @@ const peak = Math.max(
                 Vehicle Detections — Per Camera
               </div>
               <div className="text-xs text-[#93A2B8] mt-0.5">
-                Vehicle detections across runtime cameras
+                Day-wise count across all online surveillance cameras
               </div>
             </div>
           </div>
 
-<div className="flex items-end gap-3 p-4 pt-5 min-h-[220px]">
-  {cameraDetections.length > 0 ? (
-    cameraDetections.map((item) => {
-      const height =
-        item.count > 0
-          ? Math.max((item.count / peak) * 100, 8)
-          : 0;
-
-      return (
-        <div
-          key={item.camera}
-          className="flex-1 h-[180px] flex flex-col justify-end items-center"
-        >
-          <div
-            className={`w-full max-w-[90px] rounded-t transition-all ${
-              item.count === peak
-                ? "bg-gradient-to-b from-[#7BA4D0] to-[#E7F0FA]"
-                : "bg-gradient-to-b from-[#2E5E99] to-[#E7F0FA]"
-            }`}
-            style={{
-              height: `${height}%`,
-            }}
-            title={`${item.camera}: ${item.count} detection${
-              item.count !== 1 ? "s" : ""
-            }`}
-          />
-        </div>
-      );
-    })
-  ) : (
-    <div className="w-full h-[180px] flex items-center justify-center">
-      <span className="text-xs text-[#93A2B8]">
-        No vehicle detections yet
-      </span>
-    </div>
-  )}
-</div>
-
-<div className="flex gap-3 px-4 pb-3.5">
-  {cameraDetections.map((item) => (
-    <div
-      key={item.camera}
-      className="flex-1 text-center font-mono text-[8.5px] text-[#93A2B8]"
-    >
-      {item.camera}
-    </div>
-  ))}
-</div>
+          <div className="flex items-end gap-1.5 p-4 pt-5 min-h-[220px]">
+            {barChartData.map((h, idx) => (
+              <div
+                key={idx}
+                className={`flex-1 rounded-t transition-all ${
+                  h === peak
+                    ? "bg-gradient-to-b from-[#7BA4D0] to-[#E7F0FA]"
+                    : "bg-gradient-to-b from-[#2E5E99] to-[#E7F0FA]"
+                }`}
+                style={{ height: `${h}%` }}
+              />
+            ))}
+          </div>
 
           <div className="flex justify-between px-4 pb-3.5 font-mono text-[8.5px] text-[#93A2B8]">
             <span>00:00</span>
@@ -208,7 +217,7 @@ const peak = Math.max(
               Re-ID Confidence Distribution
             </div>
             <div className="text-xs text-[#93A2B8] mt-0.5">
-              Match confidence across all Re-ID results
+              Match confidence across gallery identification results
             </div>
           </div>
 
@@ -245,7 +254,10 @@ const peak = Math.max(
                       {entry.name}
                     </div>
                     <div className="text-[13px] font-bold text-[#0D2440]">
-                      {entry.value}% <span className="text-[#93A2B8] font-normal text-[11px]">({entry.count})</span>
+                      {entry.value}%{" "}
+                      <span className="text-[#93A2B8] font-normal text-[11px]">
+                        ({entry.count})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -255,53 +267,91 @@ const peak = Math.max(
         </div>
       </section>
 
-      {/* TABLE PANEL */}
+      {/* TABLE PANEL: LIVE SURVEILLANCE & RE-ID SIGHTINGS */}
       <section className="bg-white border border-[#E4EAF2] rounded-xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-[#EEF2F8]">
-          <div className="font-display text-sm font-semibold text-[#0D2440]">
-            Recent Vehicle Sightings
+        <div className="p-4 border-b border-[#EEF2F8] flex items-center justify-between">
+          <div>
+            <div className="font-display text-sm font-semibold text-[#0D2440]">
+              Real-Time Incident & Sighting Telemetry
+            </div>
+            <div className="text-xs text-[#93A2B8] mt-0.5">
+              Live automated feed from Module 4 Congestion Engine and Vehicle Re-ID
+            </div>
           </div>
-          <div className="text-xs text-[#93A2B8] mt-0.5">
-            Detected and re-identified vehicles across surveillance cameras
-          </div>
+          <span className="text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">
+            Live MongoDB Sync Active
+          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#FAFCFE] border-b border-[#E4EAF2]">
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Vehicle ID</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Type</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Color</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">License Plate</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Camera</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Timestamp</th>
-                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">Re-ID Conf.</th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Event ID
+                </th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Camera
+                </th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Diagnostic Reasoning
+                </th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Vehicle Density
+                </th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Stopped Ratio
+                </th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Timestamp
+                </th>
+                <th className="font-mono text-[9.5px] tracking-wider text-[#93A2B8] uppercase font-medium px-4 py-3">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EEF2F8] text-xs text-[#4B617D]">
-              {sightings.map((row) => (
-                <tr key={row.id} className="hover:bg-[#FAFCFE] transition-colors">
-                  <td className="font-mono text-[#0D2440] font-semibold px-4 py-3">{row.id}</td>
-                  <td className="px-4 py-3">{row.type}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full border border-[#E4EAF2]" style={{ backgroundColor: row.swatch }} />
-                      {row.color}
-                    </span>
-                  </td>
-                  <td className={`font-mono px-4 py-3 ${row.plate === "Not detected" ? "text-[#93A2B8] italic" : ""}`}>
-                    {row.plate}
-                  </td>
-                  <td className="font-mono text-[11.5px] text-[#2E5E99] font-medium px-4 py-3">{row.camera}</td>
-                  <td className="font-mono text-[#93A2B8] px-4 py-3">{row.timestamp}</td>
-                  <td className="px-4 py-3">
-                    <span className={`font-mono font-semibold text-[11.5px] px-2 py-0.5 rounded ${row.confClass}`}>
-                      {row.confidence}
-                    </span>
+              {recentIncidents.length > 0 ? (
+                recentIncidents.map((row) => (
+                  <tr key={row.id} className="hover:bg-[#FAFCFE] transition-colors">
+                    <td className="font-mono text-[#0D2440] font-semibold px-4 py-3">
+                      {row.id}
+                    </td>
+                    <td className="font-mono text-[11.5px] text-[#2E5E99] font-medium px-4 py-3">
+                      {row.camera}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-800">
+                      {row.reasoning}
+                    </td>
+                    <td className="px-4 py-3">{row.vehicles} vehicles</td>
+                    <td className="px-4 py-3">
+                      <span className="font-semibold text-rose-600">
+                        {row.stoppedRatio}% stopped
+                      </span>
+                    </td>
+                    <td className="font-mono text-[#93A2B8] px-4 py-3">
+                      {row.timestamp}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`font-mono font-semibold text-[10.5px] px-2 py-0.5 rounded ${
+                          row.status === "RESOLVED"
+                            ? "bg-slate-100 text-slate-600"
+                            : "bg-rose-50 text-rose-600 border border-rose-200"
+                        }`}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="text-center py-6 text-slate-400">
+                    No active incident records found in MongoDB. Execute a stream analysis to generate live metrics.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

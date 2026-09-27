@@ -34,6 +34,7 @@ ml_service/data/
 weights/
 **/weights/
 ml_service/weights/
+ml_service/gallery_embeddings.npz
 
 # Video Files & Media (Never push to GitHub)
 *.mp4
@@ -41,6 +42,9 @@ ml_service/weights/
 *.mov
 *.mkv
 *.webm
+# EXCEPTION: sample_traffic.mp4 is the source video the live congestion
+# feed (/live-traffic-feed) depends on, so it must stay in the repo.
+!ml_service/sample_traffic.mp4
 
 # ML Generated Outputs & Temp Storage
 ml_service/static/
@@ -48,3 +52,16 @@ ml_service/uploads/
 server/uploads/
 uploads/
 **/uploads/
+
+# Congestion module: per-request temp uploads (never meant to persist)
+ml_service/temp_congestion_*
+ml_service/temp_cam1_*
+ml_service/temp_cam2_*
+
+# Runtime logs / local state (regenerated per machine, not shared data)
+ml_service/match_log.json
+
+# Editor / OS junk
+.idea/
+.DS_Store
+Thumbs.db

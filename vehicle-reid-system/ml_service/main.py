@@ -22,7 +22,7 @@ from fastapi import (
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from ultralytics import YOLO
@@ -145,8 +145,15 @@ def read_match_log():
 
 sys.path.insert(0, BASE_DIR)
 
-from anpr import read_plate
-import section_3_3 as plate_track
+try:
+    from anpr import read_plate
+    import section_3_3 as plate_track
+except ImportError as e:
+    # Missing anpr.py / section_3_3.py must NOT take down the whole service
+    # (congestion detection, ReID, etc. don't depend on ANPR at all).
+    print(f"[Warning] ANPR module import skipped: {e}")
+    read_plate = None
+    plate_track = None
 
 
 # ============================================================
@@ -211,10 +218,12 @@ app.add_middleware(
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 MATCHES_DIR = os.path.join(STATIC_DIR, "matches")
 DEBUG_DIR = os.path.join(STATIC_DIR, "debug")
+ANNOTATED_DIR = os.path.join(STATIC_DIR, "annotated")  # <-- congestion module writes here
 
 os.makedirs(STATIC_DIR, exist_ok=True)
 os.makedirs(MATCHES_DIR, exist_ok=True)
 os.makedirs(DEBUG_DIR, exist_ok=True)
+os.makedirs(ANNOTATED_DIR, exist_ok=True)
 
 app.mount(
     "/static",
@@ -242,8 +251,11 @@ else:
 
 
 # ============================================================
-# LOAD CLIP-ReID MODEL
+# LOAD CLIP-ReID MODEL (optional — congestion detection doesn't need this)
 # ============================================================
+
+clip_model = None
+classifier = None
 
 clip_config_path = os.path.join(
     CLIP_REID_DIR,
@@ -252,58 +264,10 @@ clip_config_path = os.path.join(
     "vit_base.yml",
 )
 
-if not os.path.exists(clip_config_path):
-    raise FileNotFoundError(
-        f"CLIP-ReID config not found: {clip_config_path}"
-    )
-
-cfg.merge_from_file(clip_config_path)
-cfg.freeze()
-
-clip_model = make_model(
-    cfg,
-    num_class=576,
-    camera_num=20,
-    view_num=8,
-)
-
-
-# ============================================================
-# CLIP-ReID WEIGHTS
-# ============================================================
-
 clip_weights_path = os.path.join(
     BASE_DIR,
     "weights",
     "ViT-B-16_60.pth",
-)
-
-if not os.path.exists(clip_weights_path):
-    raise FileNotFoundError(
-        f"CLIP-ReID weights not found: {clip_weights_path}"
-    )
-
-print("Loading CLIP-ReID weights...")
-
-clip_model.load_state_dict(
-    torch.load(
-        clip_weights_path,
-        map_location=clip_device,
-    )
-)
-
-clip_model.to(clip_device)
-clip_model.eval()
-
-print("CLIP-ReID model loaded successfully.")
-
-
-# ============================================================
-# LOAD PAIR CLASSIFIER
-# ============================================================
-
-classifier = PairClassifier(
-    input_dim=1280
 )
 
 classifier_weights_path = os.path.join(
@@ -312,25 +276,48 @@ classifier_weights_path = os.path.join(
     "pair_classifier_full.pth",
 )
 
-if not os.path.exists(classifier_weights_path):
-    raise FileNotFoundError(
-        f"Pair classifier weights not found: "
-        f"{classifier_weights_path}"
+try:
+    if not os.path.exists(clip_config_path):
+        raise FileNotFoundError(f"CLIP-ReID config not found: {clip_config_path}")
+    if not os.path.exists(clip_weights_path):
+        raise FileNotFoundError(f"CLIP-ReID weights not found: {clip_weights_path}")
+    if not os.path.exists(classifier_weights_path):
+        raise FileNotFoundError(f"Pair classifier weights not found: {classifier_weights_path}")
+
+    cfg.merge_from_file(clip_config_path)
+    cfg.freeze()
+
+    clip_model = make_model(
+        cfg,
+        num_class=576,
+        camera_num=20,
+        view_num=8,
     )
 
-print("Loading pair classifier...")
-
-classifier.load_state_dict(
-    torch.load(
-        classifier_weights_path,
-        map_location=clip_device,
+    print("Loading CLIP-ReID weights...")
+    clip_model.load_state_dict(
+        torch.load(clip_weights_path, map_location=clip_device)
     )
-)
+    clip_model.to(clip_device)
+    clip_model.eval()
+    print("CLIP-ReID model loaded successfully.")
 
-classifier.to(clip_device)
-classifier.eval()
+    classifier = PairClassifier(input_dim=1280)
 
-print("Pair classifier loaded successfully.")
+    print("Loading pair classifier...")
+    classifier.load_state_dict(
+        torch.load(classifier_weights_path, map_location=clip_device)
+    )
+    classifier.to(clip_device)
+    classifier.eval()
+    print("Pair classifier loaded successfully.")
+
+except Exception as e:
+    # Missing weight files must NOT take down the whole service — congestion
+    # detection, ANPR, etc. don't depend on CLIP-ReID / the pair classifier.
+    print(f"[Warning] CLIP-ReID / pair classifier not loaded, /find-match will be unavailable: {e}")
+    clip_model = None
+    classifier = None
 
 
 # ============================================================
@@ -406,7 +393,7 @@ VEHICLE_CLASSES = [2, 3, 5, 7]
 
 
 # ============================================================
-# MODULE 3 - ANPR SETTINGS
+# ANPR SETTINGS
 # ============================================================
 
 CROP_PADDING_RATIO = 0.08
@@ -414,43 +401,40 @@ DETECTION_INPUT_MAX_DIM = 640
 
 
 # ============================================================
-# MODULE 3.1 / 3.2 - ANPR IMAGE PLATE DETECTION + RECOGNITION
-# (as-is from the working ANPR module)
+# MODULE 3.1 - ANPR IMAGE PLATE DETECTION
 # ============================================================
 
 @api_router.post("/plate-detect")
 async def plate_detect(
     file: UploadFile = File(...),
-    camera_id: str = Form("Camera_1")
+    camera_id: str = Form("Camera_1"),
 ):
+
+    if read_plate is None:
+        raise HTTPException(status_code=500, detail="ANPR module not loaded.")
 
     contents = await file.read()
 
     if not contents:
-
         raise HTTPException(
             status_code=400,
-            detail="Uploaded image is empty."
+            detail="Uploaded image is empty.",
         )
 
     nparr = np.frombuffer(
         contents,
-        np.uint8
+        np.uint8,
     )
 
     frame = cv2.imdecode(
         nparr,
-        cv2.IMREAD_COLOR
+        cv2.IMREAD_COLOR,
     )
 
     if frame is None:
-
         raise HTTPException(
             status_code=400,
-            detail=(
-                "OpenCV could not read "
-                "the uploaded image."
-            )
+            detail="OpenCV could not read the uploaded image.",
         )
 
     try:
@@ -459,12 +443,12 @@ async def plate_detect(
 
         plate_text = raw_result.get(
             "plate_text",
-            None
+            None,
         )
 
         confidence = raw_result.get(
             "confidence",
-            0.0
+            0.0,
         )
 
         plate_box = (
@@ -475,12 +459,12 @@ async def plate_detect(
 
         plate_type = raw_result.get(
             "plate_type",
-            "Standard"
+            "Standard",
         )
 
         selected_model = raw_result.get(
             "selected_model",
-            "YOLOv8 + EasyOCR"
+            "YOLOv8 + EasyOCR",
         )
 
         return {
@@ -498,9 +482,11 @@ async def plate_detect(
                     "confidence": confidence,
                     "plate_box": plate_box,
                     "plate_type": plate_type,
-                    "selected_model": selected_model
+                    "selected_model": selected_model,
                 }
-            ] if plate_text else []
+            ]
+            if plate_text
+            else [],
         }
 
     except Exception as e:
@@ -511,53 +497,122 @@ async def plate_detect(
             status_code=500,
             detail={
                 "message": "Plate detection failed",
-                "error": str(e)
-            }
+                "error": str(e),
+            },
         )
+
 
 # ============================================================
 # MODULE 3.3 - PLATE-BASED VIDEO TRACKING
-# (as-is from the working ANPR module)
 # ============================================================
 
 @api_router.post("/plate-track")
-async def plate_track_upload(video: UploadFile = File(...)):
-    if not video.filename:
-        raise HTTPException(status_code=400, detail="Upload a camera video first")
+async def plate_track_upload(
+    video: UploadFile = File(...),
+):
 
-    suffix = os.path.splitext(video.filename)[1] or ".mp4"
-    in_path = os.path.join(plate_track.RESULTS_DIR, f"{os.urandom(8).hex()}_in{suffix}")
+    if plate_track is None:
+        raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
+
+    if not video.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Upload a camera video first",
+        )
+
+    suffix = (
+        os.path.splitext(video.filename)[1]
+        or ".mp4"
+    )
+
+    in_path = os.path.join(
+        plate_track.RESULTS_DIR,
+        f"{os.urandom(8).hex()}_in{suffix}",
+    )
+
     try:
+
         contents = await video.read()
+
         if len(contents) > plate_track.MAX_UPLOAD_BYTES:
+
             raise HTTPException(
                 status_code=413,
                 detail="Video is too large. Use a file under 40 MB.",
             )
+
         with open(in_path, "wb") as handle:
             handle.write(contents)
-    except OSError as exc:
-        raise HTTPException(status_code=500, detail=plate_track.disk_error(exc)) from exc
 
-    return {"job_id": plate_track.launch_job(in_path, delete_input=True)}
+    except OSError as exc:
+
+        raise HTTPException(
+            status_code=500,
+            detail=plate_track.disk_error(exc),
+        ) from exc
+
+    return {
+        "job_id": plate_track.launch_job(
+            in_path,
+            delete_input=True,
+        )
+    }
+
+
+# ============================================================
+# MODULE 3.3 - SAMPLE VIDEO
+# ============================================================
 
 @api_router.post("/plate-track-sample")
 async def plate_track_sample():
-    sample = os.path.join(plate_track.ROOT, "sample.mp4")
+
+    if plate_track is None:
+        raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
+
+    sample = os.path.join(
+        plate_track.ROOT,
+        "sample.mp4",
+    )
+
     if not os.path.exists(sample):
+
         raise HTTPException(
             status_code=404,
             detail="sample.mp4 is missing next to section_3_3.py",
         )
-    return {"job_id": plate_track.launch_job(sample, delete_input=False)}
+
+    return {
+        "job_id": plate_track.launch_job(
+            sample,
+            delete_input=False,
+        )
+    }
+
+
+# ============================================================
+# MODULE 3.3 - TRACKING STATUS
+# ============================================================
 
 @api_router.get("/plate-track-status/{job_id}")
-async def plate_track_status(job_id: str):
+async def plate_track_status(
+    job_id: str,
+):
+
+    if plate_track is None:
+        raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
+
     with plate_track.jobs_lock:
+
         job = plate_track.jobs.get(job_id)
+
         if not job:
-            raise HTTPException(status_code=404, detail="Unknown job")
+            raise HTTPException(
+                status_code=404,
+                detail="Unknown job",
+            )
+
         done = job["status"] == "done"
+
         return {
             "status": job["status"],
             "frame": job["frame"],
@@ -565,39 +620,83 @@ async def plate_track_status(job_id: str):
             "message": job["message"],
             "plates": job.get("plates") or [],
             "error": job.get("error"),
-            "video_url": f"/api/plate-track-result/{job_id}" if done else None,
+            "video_url": (
+                f"/api/plate-track-result/{job_id}"
+                if done
+                else None
+            ),
         }
 
+
+# ============================================================
+# MODULE 3.3 - TRACKING RESULT
+# ============================================================
+
 @api_router.get("/plate-track-result/{job_id}")
-async def plate_track_result(job_id: str):
+async def plate_track_result(
+    job_id: str,
+):
+
+    if plate_track is None:
+        raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
+
     with plate_track.jobs_lock:
+
         job = plate_track.jobs.get(job_id)
+
         if not job:
-            raise HTTPException(status_code=404, detail="Unknown job")
+            raise HTTPException(
+                status_code=404,
+                detail="Unknown job",
+            )
+
         if job["status"] != "done":
-            raise HTTPException(status_code=400, detail="Still processing")
+            raise HTTPException(
+                status_code=400,
+                detail="Still processing",
+            )
+
         out_path = job["output"]
+
     if not os.path.exists(out_path):
-        raise HTTPException(status_code=404, detail="Result video missing")
+
+        raise HTTPException(
+            status_code=404,
+            detail="Result video missing",
+        )
+
     return FileResponse(
         out_path,
         media_type="video/mp4",
         filename="plate_tracking.mp4",
     )
 
+
+# ============================================================
+# MODULE 3.3 - TRACKING SNAPSHOT IMAGES (car / plate crops)
+# ============================================================
+
 @api_router.get("/plate-track-image/{job_id}/{track_id}/{kind}")
 async def plate_track_image(job_id: str, track_id: int, kind: str):
+
+    if plate_track is None:
+        raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
+
     if kind not in ("car", "plate"):
         raise HTTPException(status_code=400, detail="Invalid image kind")
+
     with plate_track.jobs_lock:
         job = plate_track.jobs.get(job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Unknown job")
         if job["status"] != "done":
             raise HTTPException(status_code=400, detail="Still processing")
+
     path = plate_track.snapshot_image_path(job_id, track_id, kind)
+
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail="Image missing")
+
     return FileResponse(path, media_type="image/jpeg")
 
 
@@ -640,6 +739,7 @@ async def detect_congestion_endpoint(
                 "http://localhost:5000/api/congestion/log"
             ),
             hold_time_sec=hold_time_sec,
+            output_dir=ANNOTATED_DIR,  # <-- write annotated video where /video-stream can find it
         )
 
         result = engine.analyze_video(
@@ -665,6 +765,97 @@ async def detect_congestion_endpoint(
 
         if os.path.exists(temp_video_path):
             os.remove(temp_video_path)
+
+
+# ============================================================
+# MODULE 4 - SERVE ANNOTATED CONGESTION VIDEO
+# ============================================================
+
+@app.get("/video-stream/{filename}")
+async def get_video_stream(filename: str):
+    """
+    Serves the annotated .mp4 produced by CongestionEngine.analyze_video().
+    /detect-congestion returns this URL in its response
+    (annotated_video_url: http://localhost:8000/video-stream/{filename}),
+    so this route must exist for the congestion module's playback to work.
+    """
+    # Guard against path traversal via the filename (e.g. "../../etc/passwd")
+    safe_name = os.path.basename(filename)
+    file_path = os.path.join(ANNOTATED_DIR, safe_name)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Annotated video not found")
+
+    return FileResponse(file_path, media_type="video/mp4")
+
+
+# ============================================================
+# MODULE 4 - LIVE CCTV MJPEG FEED (continuous stream)
+# ============================================================
+
+@app.get("/live-traffic-feed/{camera_id}")
+async def live_traffic_feed(camera_id: str):
+    """
+    Continuously loops a source video through CongestionEngine.process_frame()
+    and streams it out as MJPEG, for the frontend's "Live CCTV" panel.
+    Looks for sample_traffic.mp4 in ml_service/, falling back to the first
+    .mp4 found there (skipping temp_ files) if it's missing.
+    """
+    target_video = os.path.join(BASE_DIR, "sample_traffic.mp4")
+
+    if not os.path.isfile(target_video):
+        mp4_files = [
+            os.path.join(BASE_DIR, f) for f in os.listdir(BASE_DIR)
+            if f.lower().endswith(".mp4") and os.path.isfile(os.path.join(BASE_DIR, f)) and not f.startswith("temp_")
+        ]
+        if mp4_files:
+            target_video = mp4_files[0]
+        else:
+            raise HTTPException(status_code=404, detail="No source video found for live feed.")
+
+    def generate_frames():
+        engine = CongestionEngine(
+            model_path=yolo_weights_path,
+            node_backend_url="http://localhost:5000/api/congestion/log",
+            hold_time_sec=2.0,
+        )
+
+        while True:
+            cap = cv2.VideoCapture(target_video)
+            if not cap.isOpened():
+                time.sleep(1.0)
+                continue
+
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or 1280
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 720
+
+            # Road ROI Boundary Polygon
+            roi_poly = np.array([
+                [int(width * 0.05), height],
+                [int(width * 0.20), int(height * 0.15)],
+                [int(width * 0.80), int(height * 0.15)],
+                [int(width * 0.95), height]
+            ], dtype=np.int32)
+
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                # Let the engine calculate normalized speed, stopped status, and colors
+                annotated_frame = engine.process_frame(frame, camera_id=camera_id, roi_poly=roi_poly)
+
+                _, buffer = cv2.imencode('.jpg', annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                frame_bytes = buffer.tobytes()
+
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+                time.sleep(0.03)
+
+            cap.release()
+
+    return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 # ============================================================
@@ -696,6 +887,12 @@ async def find_match(
     file: UploadFile = File(...),
     exclude_same_camera: bool = Form(True),
 ):
+
+    if clip_model is None or classifier is None:
+        raise HTTPException(
+            status_code=503,
+            detail="CLIP-ReID model or pair classifier not loaded (missing weight files).",
+        )
 
     filename = file.filename or "query_image.jpg"
     start_time = time.time()

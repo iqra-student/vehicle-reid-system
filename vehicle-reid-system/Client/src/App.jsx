@@ -28,6 +28,7 @@ import VehicleForensicsPage from "./pages/Operator/VehicleForensicsPage";
 import ConvoyDetectionPage from "./pages/Operator/ConvoyDetectionPage";
 import TrafficCongestionPage from "./pages/Operator/TrafficCongestionPage";
 import PathVisualizationPage from "./pages/Operator/PathVisualizationPage";
+import AlertsPage from "./pages/Operator/AlertsPage";
 
 // Active Admin Pages
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -82,7 +83,7 @@ export default function App() {
               <Route element={<OperatorLayout />}>
                 <Route path="/operator/dashboard" element={<OperatorDashboard />} />
                 <Route path="/operator/live-monitoring" element={<ApprovedCamerasPage />} />
-                
+
                 {/* Vehicle Re-ID Comparison Page mounted directly here */}
                 <Route path="/operator/reid-review" element={<VehicleCompare />} />
                 <Route path="/operator/compare" element={<VehicleCompare />} />
@@ -98,11 +99,7 @@ export default function App() {
                 <Route path="/operator/path-viz" element={<PathVisualizationPage />} />
                 <Route
                   path="/operator/alerts"
-                  element={
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md">
-                      <h1 className="text-xl font-bold text-slate-900">System Alerts Log</h1>
-                    </div>
-                  }
+                  element={<AlertsPage />}
                 />
                 <Route
                   path="/operator/reports"
