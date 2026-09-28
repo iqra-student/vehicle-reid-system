@@ -26,24 +26,9 @@ export default function AdminCameraManagement() {
         
         {/* PAGE HEADER */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: SAPPHIRE }} />
-            <span className="text-xs font-bold tracking-[0.15em]" style={{ color: SAPPHIRE }}>
-              ADMINISTRATION
-            </span>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <div
-              className="p-3 rounded-2xl shadow-sm"
-              style={{ backgroundColor: "#FFFFFF", border: `1px solid ${MIST}` }}
-            >
-              <Video className="w-6 h-6" style={{ color: SAPPHIRE }} />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: INK }}>
-              Camera Management
-            </h1>
-          </div>
+
+
 
           <p className="text-sm md:text-base mt-3 max-w-2xl leading-relaxed" style={{ color: SAPPHIRE }}>
             Review incoming camera requests, register new nodes, and monitor every

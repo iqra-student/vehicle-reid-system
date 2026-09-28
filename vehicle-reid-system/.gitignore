@@ -65,3 +65,11 @@ ml_service/match_log.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# Large ML/data files
+*.pkl
+*.npz
+*.pt
+
+# Large videos
+*.mp4

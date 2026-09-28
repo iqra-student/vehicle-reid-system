@@ -1,5 +1,7 @@
 """3.3 Plate-based vehicle tracking """
 import base64
+from enum import verify
+from enum import verify
 import os
 import shutil
 import string
@@ -39,7 +41,7 @@ INT_TO_CHAR = {"0": "O", "1": "I", "3": "J", "4": "A", "6": "G", "5": "S"}
 def plate_model_path():
     for path in (
         os.path.join(ROOT, "license_plate_detector.pt"),
-        os.path.join(ROOT, "models", "license_plate_detector.pt"),
+        os.path.join(ROOT, "weights", "license_plate_detector.pt"),
     ):
         if os.path.isfile(path):
             return path
@@ -319,14 +321,37 @@ def annotate(frame, tracks):
             pass
     return frame
 
+# def ffmpeg_exe():
+#     found = shutil.which("ffmpeg")
+#     print("[FFmpeg] PATH result:", found)
+
+#     if found:
+#         return found
+
+#     try:
+#         import imageio_ffmpeg
+#         ff = imageio_ffmpeg.get_ffmpeg_exe()
+#         print("[FFmpeg] imageio_ffmpeg result:", ff)
+#         return ff
+#     except Exception as e:
+#         print("[FFmpeg] imageio_ffmpeg ERROR:", repr(e))
+#         return None
+
+
 def ffmpeg_exe():
     found = shutil.which("ffmpeg")
+    print("[FFmpeg] PATH result:", found)
+
     if found:
         return found
+
     try:
         import imageio_ffmpeg
-        return imageio_ffmpeg.get_ffmpeg_exe()
-    except Exception:
+        ff = imageio_ffmpeg.get_ffmpeg_exe()
+        print("[FFmpeg] imageio_ffmpeg result:", ff)
+        return ff
+    except Exception as e:
+        print("[FFmpeg] imageio_ffmpeg ERROR:", repr(e))
         return None
 
 def _run_ffmpeg(cmd):
@@ -365,24 +390,85 @@ def open_video(input_path, job_id):
 
 def make_browser_mp4(src, dst, job_id):
     ffmpeg = ffmpeg_exe()
+
     if not ffmpeg:
-        if os.path.abspath(src) != os.path.abspath(dst):
-            os.replace(src, dst)
-        return dst
-    set_job(job_id, message="Encoding a smaller video for the browser...")
-    _run_ffmpeg([
-        ffmpeg, "-y", "-i", src,
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "32",
-        "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", dst,
-    ])
+        raise RuntimeError(
+            "FFmpeg is required to create a browser-compatible H.264 MP4."
+        )
+
+    set_job(job_id, message="Encoding a browser-compatible H.264 video...")
+
+    try:
+        _run_ffmpeg([
+            ffmpeg,
+            "-y",
+            "-i", src,
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-crf", "28",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
+            "-an",
+            dst,
+        ])
+    except subprocess.CalledProcessError:
+        raise RuntimeError(
+            "FFmpeg failed while creating the browser-compatible video."
+        ) from None
+
+    if not os.path.exists(dst) or os.path.getsize(dst) < 1000:
+        raise RuntimeError("Could not encode browser video.")
+
+    # Verify the actual video codec using ffmpeg itself.
+    probe = subprocess.run(
+         [
+             ffmpeg,
+             "-i", dst,
+            "-f", "null",
+            "-"
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    output = (probe.stderr + probe.stdout).lower()
+
+    if probe.returncode != 0:
+        raise RuntimeError(
+            f"Browser video verification failed: {probe.stderr.strip()}"
+        ) 
+
+    if "video: h264" in output or "video: h264 " in output:
+        codec = "h264"
+    else:
+        codec = ""
+
+    print("[FFmpeg] Browser output codec:", codec)
+
+    if codec != "h264":
+        raise RuntimeError(
+        f"Browser video encoding failed: expected h264, got {codec or 'unknown'}"
+    )
+
+    print("[FFmpeg] Browser output codec:", codec)
+
+    if probe.returncode != 0:
+        raise RuntimeError(
+            f"Browser video verification failed: {probe.stderr.strip()}"
+        )
+
+    if codec != "h264":
+        raise RuntimeError(
+            f"Browser video encoding failed: expected h264, got {codec or 'unknown'}"
+        )
+
+    # Remove temporary raw mp4 after successful conversion
     try:
         os.unlink(src)
     except OSError:
         pass
-    if not os.path.exists(dst) or os.path.getsize(dst) < 1000:
-        raise RuntimeError("Could not encode browser video")
-    return dst
 
+    return dst
 def process_video(input_path, output_path, job_id):
     load_models()
     cap, converted = open_video(input_path, job_id)

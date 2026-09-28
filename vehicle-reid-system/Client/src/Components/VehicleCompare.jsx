@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-/* =========================
+import React, { useState, useEffect } from "react";/* =========================
    Icons
 ========================= */
 
@@ -245,8 +244,19 @@ const VehicleReIDEngine = () => {
   const [matchResult, setMatchResult] = useState(null);
   const [matchElapsed, setMatchElapsed] = useState(null);
 
-  const [camSort, setCamSort] = useState("score");
-const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-controlled
+   const [camSort, setCamSort] = useState("score");
+  const [threshold, setThreshold] = useState(40); // percentage, 0-100, user-controlled
+  const [modelInfo, setModelInfo] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/model-info`, {
+      headers: { "ngrok-skip-browser-warning": "true" },
+    })
+      .then((res) => res.json())
+      .then((info) => setModelInfo(info))
+      .catch((err) => console.error("Could not fetch model info:", err));
+  }, []);
+
   const handleQueryFileChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -266,118 +276,115 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
     setQueryPreview(previewUrl);
   };
 
- const handleFindMatch = async () => {
-  if (!queryFile) {
-    alert("Please upload a query image first.");
-    return;
-  }
-
-  setMatchLoading(true);
-  setMatchResult(null);
-  setMatchElapsed(null);
-
-  const startTime = performance.now();
-
-  try {
-    const formData = new FormData();
-    formData.append("file", queryFile);
-
-    const response = await fetch(`${API_BASE}/find-match`, {
-      method: "POST",
-      headers: { "ngrok-skip-browser-warning": "true" },
-      body: formData,
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const errorMessage =
-        typeof data.detail === "string"
-          ? data.detail
-          : data.message || "Find Match request failed.";
-
-      throw new Error(errorMessage);
+  const handleFindMatch = async () => {
+    if (!queryFile) {
+      alert("Please upload a query image first.");
+      return;
     }
-        // ----------------------------------------------------
-    // SEND SUCCESSFUL KAGGLE RESULT TO LOCAL DASHBOARD
-    // ----------------------------------------------------
+
+    setMatchLoading(true);
+    setMatchResult(null);
+    setMatchElapsed(null);
+
+    const startTime = performance.now();
 
     try {
-      const dashboardResponse = await fetch(
-        "http://127.0.0.1:8000/dashboard-log",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query_filename: queryFile.name,
-            query_camera: data.query_camera,
-            matches: data.matches || [],
-          }),
-        }
-      );
+      const formData = new FormData();
+      formData.append("file", queryFile);
 
-      if (!dashboardResponse.ok) {
-        console.error(
-          "Dashboard logging failed:",
-          await dashboardResponse.text()
+      const response = await fetch(`${API_BASE}/find-match`, {
+        method: "POST",
+        headers: { "ngrok-skip-browser-warning": "true" },
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const errorMessage =
+          typeof data.detail === "string"
+            ? data.detail
+            : data.message || "Find Match request failed.";
+
+        throw new Error(errorMessage);
+      }
+      // ----------------------------------------------------
+      // SEND SUCCESSFUL KAGGLE RESULT TO LOCAL DASHBOARD
+      // ----------------------------------------------------
+
+      try {
+        const dashboardResponse = await fetch(
+          "http://127.0.0.1:8000/dashboard-log",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query_filename: queryFile.name,
+              query_camera: data.query_camera,
+              matches: data.matches || [],
+            }),
+          }
         );
-      } else {
-        console.log("Dashboard log updated successfully.");
+
+        if (!dashboardResponse.ok) {
+          console.error(
+            "Dashboard logging failed:",
+            await dashboardResponse.text()
+          );
+        } else {
+          console.log("Dashboard log updated successfully.");
+        }
+      } catch (dashboardError) {
+        console.error("Could not update local dashboard:", dashboardError);
       }
 
-    } catch (dashboardError) {
-      console.error(
-        "Could not update local dashboard:",
-        dashboardError
+      const elapsed =
+        data.elapsed_seconds ?? (performance.now() - startTime) / 1000;
+      setMatchElapsed(elapsed);
+
+      const matches = Array.isArray(data.matches) ? data.matches : [];
+
+      const matchesWithImages = await Promise.all(
+        matches.map(async (match) => {
+          const imageUrl = `${API_BASE}/gallery/${encodeURIComponent(match.matched_filename)}`;
+          let blobUrl = null;
+
+          try {
+            const imgRes = await fetch(imageUrl, {
+              headers: { "ngrok-skip-browser-warning": "true" },
+            });
+            const blob = await imgRes.blob();
+            blobUrl = URL.createObjectURL(blob);
+          } catch (err) {
+            console.error("Image fetch failed:", err);
+          }
+
+          return {
+            camera: match.camera,
+            matchedFilename: match.matched_filename,
+            confidence: Number(match.confidence) || 0,
+            confidencePercentage:
+              match.confidencePercentage ??
+              `${((Number(match.confidence) || 0) * 100).toFixed(1)}%`,
+            matchedImageUrl: blobUrl,
+          };
+        })
       );
+
+      setMatchResult({
+        queryFilename: queryFile.name,
+        queryCamera: data.query_camera,
+        matches: matchesWithImages,
+      });
+    } catch (error) {
+      console.error("Find Match error:", error);
+      alert(error.message || "Unable to find a matching vehicle.");
+    } finally {
+      setMatchLoading(false);
     }
-
-    const elapsed = data.elapsed_seconds ?? (performance.now() - startTime) / 1000;
-    setMatchElapsed(elapsed);
-
-    const matches = Array.isArray(data.matches) ? data.matches : [];
-
-    const matchesWithImages = await Promise.all(
-      matches.map(async (match) => {
-        const imageUrl = `${API_BASE}/gallery/${encodeURIComponent(match.matched_filename)}`;
-        let blobUrl = null;
-
-        try {
-          const imgRes = await fetch(imageUrl, {
-            headers: { "ngrok-skip-browser-warning": "true" },
-          });
-          const blob = await imgRes.blob();
-          blobUrl = URL.createObjectURL(blob);
-        } catch (err) {
-          console.error("Image fetch failed:", err);
-        }
-
-        return {
-          camera: match.camera,
-          matchedFilename: match.matched_filename,
-          confidence: Number(match.confidence) || 0,
-          confidencePercentage:
-            match.confidencePercentage ??
-            `${((Number(match.confidence) || 0) * 100).toFixed(1)}%`,
-          matchedImageUrl: blobUrl,
-        };
-      })
-    );
-
-    setMatchResult({
-      queryFilename: queryFile.name,
-      queryCamera: data.query_camera,
-      matches: matchesWithImages,
-    });
-  } catch (error) {
-    console.error("Find Match error:", error);
-    alert(error.message || "Unable to find a matching vehicle.");
-  } finally {
-    setMatchLoading(false);
-  }
-};
+  };
 
   const clearResults = () => {
     setQueryFile(null);
@@ -394,6 +401,28 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
 
         return Number(b.confidence) - Number(a.confidence);
       })
+    : [];
+
+  // Vehicle path: query + every match at/above the confidence threshold,
+  // ordered by frame number (VeRi-776 cameras are synchronized, so frame
+  // number alone gives correct cross-camera chronological order).
+  const thresholdFraction = (Number(threshold) || 0) / 100;
+
+  const vehiclePath = matchResult
+    ? [
+        matchResult.queryFilename
+          ? { ...parseVehicleFilename(matchResult.queryFilename), isQuery: true }
+          : null,
+        ...matchResult.matches
+          .filter((match) => (Number(match.confidence) || 0) >= thresholdFraction)
+          .map((match) => ({
+            ...parseVehicleFilename(match.matchedFilename),
+            isQuery: false,
+          })),
+      ]
+        .filter((point) => point && point.camera !== null && point.frame !== null)
+        .map((point) => ({ ...point, frame: Number(point.frame) }))
+        .sort((a, b) => a.frame - b.frame)
     : [];
 
   return (
@@ -420,6 +449,26 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
         }}
       >
         <SectionTitle icon={<PulseIcon />}>Query Vehicle</SectionTitle>
+
+        {modelInfo && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "3px 10px",
+              marginBottom: "14px",
+              borderRadius: "999px",
+              background: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              color: "#1d4ed8",
+              fontSize: "11px",
+              fontWeight: 600,
+            }}
+          >
+            Classifier: {modelInfo.pair_classifier_file}
+          </div>
+        )}
 
         <UploadTile
           file={queryFile}
@@ -448,10 +497,17 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
           {matchLoading ? "FINDING MATCH..." : "FIND MATCH"}
         </button>
         {matchElapsed !== null && (
-  <div style={{ marginTop: "6px", fontSize: "11px", color: "#94a3b8", textAlign: "right" }}>
-    Matched in {matchElapsed.toFixed(2)}s
-  </div>
-)}
+          <div
+            style={{
+              marginTop: "6px",
+              fontSize: "11px",
+              color: "#94a3b8",
+              textAlign: "right",
+            }}
+          >
+            Matched in {matchElapsed.toFixed(2)}s
+          </div>
+        )}
       </div>
 
       {/* Results */}
@@ -526,18 +582,22 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
               </button>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-  <span style={{ fontSize: "12px", color: "#64748b" }}>Min confidence:</span>
-  <input
-    type="range"
-    min="0"
-    max="100"
-    value={threshold}
-    onChange={(e) => setThreshold(Number(e.target.value))}
-  />
-  <span style={{ fontSize: "12px", fontWeight: 700, color: "#0b152d" }}>
-    {threshold}%
-  </span>
-</div>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Min confidence:
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={threshold}
+                  onChange={(e) => setThreshold(Number(e.target.value))}
+                />
+                <span
+                  style={{ fontSize: "12px", fontWeight: 700, color: "#0b152d" }}
+                >
+                  {threshold}%
+                </span>
+              </div>
             </div>
           </div>
 
@@ -628,6 +688,77 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
                 )}
             </div>
           </div>
+
+          {/* Vehicle Path */}
+          {vehiclePath.length > 1 && (
+            <div style={{ marginBottom: "24px" }}>
+              <div
+                style={{
+                  fontSize: "11px",
+                  color: "#0b152d",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: "10px",
+                }}
+              >
+                Vehicle Path
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  padding: "14px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "10px",
+                  background: "#f8fafc",
+                }}
+              >
+                {vehiclePath.map((point, index) => (
+                  <React.Fragment key={`${point.camera}-${point.frame}-${index}`}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 700,
+                          padding: "4px 10px",
+                          borderRadius: "999px",
+                          color: point.isQuery ? "#ffffff" : "#1d4ed8",
+                          background: point.isQuery ? "#0b152d" : "#eff6ff",
+                          border: point.isQuery
+                            ? "1px solid #0b152d"
+                            : "1px solid #bfdbfe",
+                        }}
+                      >
+                        Camera {point.camera}
+                      </span>
+                      <span style={{ fontSize: "10px", color: "#94a3b8" }}>
+                        {point.isQuery ? "Query" : `Frame ${point.frame}`}
+                      </span>
+                    </div>
+
+                    {index < vehiclePath.length - 1 && (
+                      <span
+                        style={{ color: "#cbd5e1", fontSize: "16px", padding: "0 2px" }}
+                      >
+                        →
+                      </span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Match Cards */}
           {sortedMatches.length === 0 ? (
@@ -759,8 +890,6 @@ const [threshold, setThreshold] = useState(50); // percentage, 0-100, user-contr
       )}
     </div>
   );
-
-
 };
 
 export default VehicleReIDEngine;

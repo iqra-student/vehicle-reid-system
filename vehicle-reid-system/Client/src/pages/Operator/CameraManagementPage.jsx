@@ -66,9 +66,7 @@ export default function CameraManagementPage() {
             <Camera className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              Camera Management
-            </h1>
+
             <p className="text-xs text-slate-400 mt-0.5 font-medium">
               Operator • Camera network configuration
             </p>

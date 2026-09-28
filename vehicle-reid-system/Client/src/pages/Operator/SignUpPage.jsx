@@ -10,6 +10,19 @@ const STEEL = "#7BA4D0";
 const DEEP = "#0C1A2B";
 const CORAL = "#B25C50";
 
+// Company domain admins must sign up with. Set via .env:
+//   VITE_ADMIN_EMAIL_DOMAIN=company.com
+// This is bundled into the JS (not a secret) — it's only for instant
+// feedback here. The Express signup route MUST re-check
+// process.env.ADMIN_EMAIL_DOMAIN server-side, or this is bypassable.
+const ADMIN_EMAIL_DOMAIN = (
+  import.meta.env.VITE_ADMIN_EMAIL_DOMAIN || "company.com"
+).toLowerCase();
+
+function isAdminEmailAllowed(email) {
+  const domain = email.split("@")[1]?.toLowerCase();
+  return domain === ADMIN_EMAIL_DOMAIN;
+}
 
 const VsmsLogoMark = ({ className = "h-8 w-8" }) => (
   <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -28,15 +41,30 @@ const VsmsLogoMark = ({ className = "h-8 w-8" }) => (
   </svg>
 );
 
+// Small eye / eye-off icon, matches SignInPage
+const EyeIcon = ({ open }) =>
+  open ? (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a8.98 8.98 0 013.122-.063c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-1.282 1.282L3 3l18 18" />
+    </svg>
+  ) : (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
 
 export default function SignUpPage() {
-  const { signup } = useAuth();
+const { signup, adminSignup } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("operator"); // "operator" | "admin"
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,14 +84,22 @@ export default function SignUpPage() {
       setFormError("Passwords do not match.");
       return;
     }
+    if (role === "admin" && !isAdminEmailAllowed(email)) {
+      setFormError(
+        `Admin accounts must sign up with a "${ADMIN_EMAIL_DOMAIN}" e-mail address.`
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
-      // Intentionally no "role" field anywhere in this form or request.
-      // The backend always assigns role: "operator" on signup;
-      // admin accounts are provisioned out-of-band (seed script / DB promotion).
-      await signup(name, email, password);
-      navigate("/operator/dashboard", { replace: true });
+     if (role === "admin") {
+  await adminSignup(name, email, password);
+  navigate("/admin/dashboard", { replace: true });
+} else {
+  await signup(name, email, password);
+  navigate("/operator/dashboard", { replace: true });
+}
     } catch (err) {
       setFormError(err.message || "Signup failed. Please try again.");
     } finally {
@@ -71,7 +107,7 @@ export default function SignUpPage() {
     }
   };
 
-const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", color: INK };
+  const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", color: INK };
   const onFieldFocus = (e) => {
     e.target.style.boxShadow = `0 0 0 3px ${SAPPHIRE}22`;
     e.target.style.borderColor = STEEL;
@@ -82,20 +118,21 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
   };
 
   return (
-<div className="h-screen w-full flex flex-col md:flex-row bg-white overflow-hidden">      {/* Left panel: form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-6 sm:px-10 overflow-y-auto">
+<div className="min-h-screen w-full flex flex-col md:flex-row bg-white overflow-hidden">      {/* Left panel: form */}
+      <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-10 sm:px-10">
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-2.5 mb-6">
-<VsmsLogoMark className="h-8 w-8" />            <span
+            <VsmsLogoMark className="h-8 w-8" />
+            <span
               className="text-[11px] tracking-[0.2em] uppercase font-mono pl-2.5"
               style={{ color: STEEL, borderLeft: "1px solid #E4EAF2" }}
             >
-               City Trace
+              CityTrace
             </span>
           </div>
 
           <h1 className="text-xl font-semibold mb-1" style={{ color: INK }}>
-            Create an operator account
+            Create an account
           </h1>
           <p className="text-sm mb-5" style={{ color: "#4B617D" }}>
             Already have an account?{" "}
@@ -113,7 +150,7 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
                 id="name"
                 type="text"
                 autoComplete="name"
-                placeholder="Jane Operator"
+                placeholder="Jane Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
@@ -123,6 +160,24 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
               />
             </div>
 
+<div>
+  <label htmlFor="role" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
+    Role
+  </label>
+  <select
+    id="role"
+    value={role}
+    onChange={(e) => setRole(e.target.value)}
+    className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none transition-shadow"
+    style={fieldStyle}
+    onFocus={onFieldFocus}
+    onBlur={onFieldBlur}
+  >
+    <option value="operator">Operator</option>
+    <option value="admin">Admin</option>
+  </select>
+</div>
+
             <div>
               <label htmlFor="email" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
                 E-mail
@@ -131,7 +186,7 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
                 id="email"
                 type="email"
                 autoComplete="username"
-                placeholder="unit.operator@city.gov"
+                placeholder={role === "admin" ? `abc@${ADMIN_EMAIL_DOMAIN}` : "abc@gmail.com"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
@@ -139,44 +194,75 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
                 onFocus={onFieldFocus}
                 onBlur={onFieldBlur}
               />
+              {role === "admin" && (
+                <p className="mt-1.5 text-[11px]" style={{ color: "#93A2B8" }}>
+                  Admin accounts require a @{ADMIN_EMAIL_DOMAIN} address.
+                </p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
-                style={fieldStyle}
-                onFocus={onFieldFocus}
-                onBlur={onFieldBlur}
-              />
+<label htmlFor="password" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
+  Password
+</label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg px-3.5 py-2 pr-10 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
+                  style={fieldStyle}
+                  onFocus={onFieldFocus}
+                  onBlur={onFieldBlur}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 transition-colors"
+                  style={{ color: "#93A2B8" }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  <EyeIcon open={showPassword} />
+                </button>
+              </div>
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-xs font-semibold mb-1.5" style={{ color: "#4B617D" }}>
                 Confirm password
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                placeholder="••••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg px-3.5 py-2 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
-                style={fieldStyle}
-                onFocus={onFieldFocus}
-                onBlur={onFieldBlur}
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="••••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-lg px-3.5 py-2 pr-10 text-sm placeholder:text-[#93A2B8] focus:outline-none transition-shadow"
+                  style={fieldStyle}
+                  onFocus={onFieldFocus}
+                  onBlur={onFieldBlur}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((s) => !s)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 transition-colors"
+                  style={{ color: "#93A2B8" }}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  <EyeIcon open={showConfirmPassword} />
+                </button>
+              </div>
             </div>
-
+<div className="text-right -mt-1.5">
+  <Link to="/forgot-password" className="text-[11px] underline underline-offset-2 transition-colors" style={{ color: "#93A2B8" }}>
+    Forgot password?
+  </Link>
+</div>
             {formError && (
               <p className="text-sm font-medium" style={{ color: CORAL }} role="alert">
                 {formError}
@@ -195,10 +281,6 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
             </button>
           </form>
 
-          <p className="mt-5 text-center text-[11px]" style={{ color: "#93A2B8" }}>
-            New accounts are provisioned with operator access only.
-            Camera registrations require admin approval before going live.
-          </p>
         </div>
       </div>
 
@@ -214,7 +296,6 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
           }}
         />
 
-        {/* faint radar ring, echoing the dashboard map */}
         <div className="absolute rounded-full border" style={{ width: 340, height: 340, right: -80, top: 40, borderColor: `${STEEL}22` }} />
 
         <div className="relative flex items-center justify-between text-xs" style={{ color: "#B7CBE2" }}>
@@ -249,9 +330,6 @@ const fieldStyle = { border: "1px solid #E4EAF2", backgroundColor: "#EAF0FB", co
   );
 }
 
-// Radar sweep visual, echoing the "Live City Map" panel on the dashboard —
-// concentric rings, tick marks, a glowing rotating scan beam, a pulsing
-// center, and camera blips that ping like live detections.
 function RadarVisual() {
   const blips = [
     { top: "28%", left: "36%", delay: "0s" },

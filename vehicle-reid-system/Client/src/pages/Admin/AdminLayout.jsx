@@ -6,7 +6,7 @@ import { LayoutDashboard, Video, Users, LogOut, ShieldCheck } from "lucide-react
 const navItems = [
   { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Camera Management", path: "/admin/cameras", icon: Video },
-  { name: "Operator Management", path: "/admin/users", icon: Users },
+  { name: "User Management", path: "/admin/users", icon: Users },
 ];
 
 export default function AdminLayout() {
@@ -39,11 +39,9 @@ export default function AdminLayout() {
             </div>
             <div className="min-w-0">
               <h1 className="font-bold text-sm tracking-wide text-white truncate">
-                VSMS Admin
+                CityTrace
               </h1>
-              <p className="text-[11px] font-semibold text-[#7BA4D0] truncate">
-                Command Oversight
-              </p>
+              
             </div>
           </div>
 
