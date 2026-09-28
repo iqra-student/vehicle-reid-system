@@ -24,7 +24,6 @@ dist-ssr
 *.sln
 *.sw?
 
-
 # Large ML/data files
 *.pkl
 *.npz
@@ -33,6 +32,7 @@ dist-ssr
 # Large videos
 *.mp4
 
+# Generated ML results
 ml_service/results_3_3_mod3/
 ml_service/results_plates/
 server/ml_service/results_plates/
