@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
+import { logActivity } from "../../api/audit";
+import AuditReasonInput from "../../Components/AuditReasonInput";
 
 // Sapphire Veil palette
 // #E7F0FA (mist)  #7BA4D0 (steel)  #2E5E99 (primary)  #0D2440 (ink)
@@ -147,6 +149,7 @@ export default function PlateSearchPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchReason, setSearchReason] = useState(""); // saved in the admin audit log
 
   const imgRef = useRef(null);
 
@@ -216,7 +219,7 @@ const videoBlob = new Blob([videoRes.data], {
         setTrackPlates(uniqueTrackPlates(job.plates || []));
         setTrackProgress(100);
         setTrackStatus("Output is on this screen. Press play if needed.");
-        return;
+        return job;
       }
       if (job.status === "error") {
         throw new Error(job.error || "Tracking failed");
@@ -225,7 +228,7 @@ const videoBlob = new Blob([videoRes.data], {
     }
   };
 
-  const runTrackJob = async (startRequest, waitingMessage) => {
+  const runTrackJob = async (startRequest, waitingMessage, sourceName) => {
     setTrackBusy(true);
     resetTrackOutput();
     setTrackStatus(waitingMessage);
@@ -234,7 +237,20 @@ const videoBlob = new Blob([videoRes.data], {
       const jobId = startRes.data?.job_id;
       if (!jobId) throw new Error("Upload failed");
       setTrackStatus("Tracking plates. Keep this tab open.");
-      await pollTrackJob(jobId);
+      const job = await pollTrackJob(jobId);
+
+      // Audit log: plate numbers only — never the base64 car snapshots
+      const plates = uniqueTrackPlates(job?.plates || []).map((p) => String(p.plate));
+      logActivity({
+        action: "PLATE_TRACK",
+        cameraId,
+        query: sourceName,
+        summary:
+          plates.length > 0
+            ? `${plates.length} plate${plates.length === 1 ? "" : "s"} read: ${plates.slice(0, 6).join(", ")}${plates.length > 6 ? "…" : ""}`
+            : "No plates read in video",
+        details: { job_id: jobId, plates: plates.slice(0, 100) },
+      });
     } catch (err) {
       const message = err.message && !err.response ? err.message : apiError(err, "Tracking failed.");
       setTrackError(message);
@@ -264,7 +280,7 @@ const videoBlob = new Blob([videoRes.data], {
     const formData = new FormData();
     formData.append("video", trackFile);
     formData.append("camera_id", cameraId);
-    await runTrackJob(() => axiosInstance.post(`/plate-track`, formData), "Uploading your video...");
+    await runTrackJob(() => axiosInstance.post(`/plate-track`, formData), "Uploading your video...", trackFile.name);
   };
 
   const handleTrackSample = async () => {
@@ -274,7 +290,7 @@ const videoBlob = new Blob([videoRes.data], {
     }
     const formData = new FormData();
     formData.append("camera_id", cameraId);
-    await runTrackJob(() => axiosInstance.post(`/plate-track-sample`, formData), "Using sample.mp4...");
+    await runTrackJob(() => axiosInstance.post(`/plate-track-sample`, formData), "Using sample.mp4...", "sample.mp4");
   };
 
   const handleFileChange = (e) => {
@@ -310,6 +326,23 @@ const videoBlob = new Blob([videoRes.data], {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResult(res.data);
+
+      const d = res.data || {};
+      logActivity({
+        action: "PLATE_DETECT",
+        cameraId,
+        query: selectedFile.name,
+        summary: d.plate_text
+          ? `Read plate ${d.plate_text} (${((Number(d.confidence) || 0) * 100).toFixed(1)}%)${
+              d.matchStatus && STATUS[d.matchStatus] ? ` · ${STATUS[d.matchStatus].label}` : ""
+            }`
+          : "No plate detected",
+        details: {
+          plate_text: d.plate_text || null,
+          confidence: Number(d.confidence) || 0,
+          matchStatus: d.matchStatus || null,
+        },
+      });
     } catch (err) {
       console.error("Plate detection error:", err);
       setError(apiError(err, "Plate detection failed. Please check backend connection."));
@@ -351,9 +384,34 @@ const videoBlob = new Blob([videoRes.data], {
       });
 
       if (response.data.status === "success") {
-        setSearchResults(response.data.results || []);
-        setMatchCount(response.data.matchCount || 0);
+        const results = response.data.results || [];
+        const count = response.data.matchCount || 0;
+        setSearchResults(results);
+        setMatchCount(count);
         setHasSearched(true);
+
+        // Audit log: plate history lookups are the most sensitive action in the system
+        logActivity({
+          action: "PLATE_SEARCH",
+          cameraId: searchCameraId.trim(),
+          query: searchQuery.trim(),
+          reason: searchReason,
+          summary:
+            count > 0
+              ? `${count} vehicle${count === 1 ? "" : "s"} found: ${results
+                  .slice(0, 5)
+                  .map((v) => `${v.plateNumber} (${v.totalSightings} sightings)`)
+                  .join(", ")}`
+              : "No records found",
+          details: {
+            matchCount: count,
+            vehicles: results.slice(0, 20).map((v) => ({
+              plate: v.plateNumber,
+              sightings: v.totalSightings,
+              cameras: v.totalCameras,
+            })),
+          },
+        });
       }
     } catch (err) {
       console.error("Search API Error:", err);
@@ -750,6 +808,10 @@ const videoBlob = new Blob([videoRes.data], {
                 Filter by Camera (Optional)
               </label>
               <CameraSelect cameras={cameras} value={searchCameraId} onChange={setSearchCameraId} includeAll />
+            </div>
+
+            <div className="md:col-span-3">
+              <AuditReasonInput value={searchReason} onChange={setSearchReason} id="plate-search-reason" />
             </div>
 
             <div className="md:col-span-3">

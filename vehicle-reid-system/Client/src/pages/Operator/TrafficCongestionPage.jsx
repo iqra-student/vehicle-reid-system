@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import {
@@ -27,12 +27,14 @@ import {
   ResponsiveContainer,
   CartesianGrid
 } from 'recharts';
+import { logActivity, authHeaders } from '../../api/audit';
 
 const BACKEND_URL = 'http://localhost:5000';
 const ML_SERVICE_URL = 'http://127.0.0.1:8000';
 
 export default function TrafficCongestionPage() {
   const [alerts, setAlerts] = useState([]);
+  const [activeCount, setActiveCount] = useState(0); // true count from the server (not limited to the list)
   const [chartData, setChartData] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState('ALL');
@@ -49,6 +51,22 @@ export default function TrafficCongestionPage() {
   // Annotated Video & Reasoning States
   const [annotatedVideoUrl, setAnnotatedVideoUrl] = useState(null);
   const [latestCongestionEvent, setLatestCongestionEvent] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
+
+  // Audit log: record which live feed an operator opens (once per camera per minute,
+  // so re-renders and React StrictMode don't create duplicate entries)
+  const lastFeedLog = useRef({ key: null, at: 0 });
+  useEffect(() => {
+    if (feedMode !== 'LIVE') return;
+    const now = Date.now();
+    if (lastFeedLog.current.key === selectedCamera && now - lastFeedLog.current.at < 60000) return;
+    lastFeedLog.current = { key: selectedCamera, at: now };
+    logActivity({
+      action: 'LIVE_FEED_VIEW',
+      cameraId: selectedCamera,
+      summary: `Opened live CCTV feed for ${selectedCamera}`,
+    });
+  }, [feedMode, selectedCamera]);
 
   useEffect(() => {
     fetchAlerts();
@@ -60,8 +78,12 @@ export default function TrafficCongestionPage() {
 
     socket.on('congestion_alert', (newAlert) => {
       setAlerts((prev) => [newAlert, ...prev]);
+      setActiveCount((c) => c + 1);
       appendChartPoint(newAlert);
     });
+
+    // Another user dismissed an alert: reload the true count
+    socket.on('congestion_resolved', () => fetchAlerts());
 
     return () => socket.disconnect();
   }, []);
@@ -72,6 +94,11 @@ export default function TrafficCongestionPage() {
       if (res.data?.status === 'success') {
         const data = res.data.data || [];
         setAlerts(data);
+        setActiveCount(
+          typeof res.data.activeCount === 'number'
+            ? res.data.activeCount
+            : data.filter((a) => !a.resolved).length
+        );
         buildChartData(data);
       }
     } catch (err) {
@@ -118,7 +145,8 @@ export default function TrafficCongestionPage() {
     formData.append('camera_id', selectedCamera);
 
     setIsProcessing(true);
-    setProcessingStatus('Running YOLOv8, ByteTrack & ROI Kinematics...');
+    setAnalysisResult(null);
+    setProcessingStatus('Detecting vehicles and measuring traffic flow. This can take a minute...');
 
     try {
       const res = await axios.post(`${ML_SERVICE_URL}/detect-congestion`, formData, {
@@ -129,8 +157,9 @@ export default function TrafficCongestionPage() {
         const result = res.data.result;
         const eventsCount = result?.congestion_events_triggered?.length || 0;
 
+        setAnalysisResult(result || null);
         setProcessingStatus(
-          `Analysis complete: ${result?.processed_frames || 0} frames processed (${eventsCount} alert${eventsCount === 1 ? '' : 's'} dispatched).`
+          `Analysis complete: ${result?.processed_frames || 0} frames checked, ${eventsCount} alert${eventsCount === 1 ? '' : 's'} raised.`
         );
 
         if (result?.annotated_video_url) {
@@ -143,11 +172,35 @@ export default function TrafficCongestionPage() {
           setLatestCongestionEvent(null);
         }
 
+        // Audit log: which footage was analysed and what the engine concluded
+        const worst = result?.worst_state || (eventsCount > 0 ? 'Congested' : 'Free Flow');
+        const peakCI = result?.peak_congestion_index;
+        const duration = result?.total_video_duration_sec;
+        logActivity({
+          action: 'CONGESTION_ANALYSIS',
+          cameraId: selectedCamera,
+          query: selectedFile.name,
+          summary:
+            `${worst}` +
+            (typeof peakCI === 'number' ? ` (peak CI ${peakCI.toFixed(2)})` : '') +
+            ` · ${eventsCount} alert${eventsCount === 1 ? '' : 's'}` +
+            (typeof duration === 'number' ? ` · ${Math.round(duration)}s video` : ''),
+          details: {
+            worst_state: result?.worst_state ?? null,
+            dominant_state: result?.dominant_state ?? null,
+            peak_congestion_index: peakCI ?? null,
+            state_durations_sec: result?.state_durations_sec ?? null,
+            alerts: eventsCount,
+            processed_frames: result?.processed_frames ?? null,
+            roi_source: result?.roi_source ?? null,
+          },
+        });
+
         fetchAlerts();
       }
     } catch (err) {
       console.error('Processing error:', err);
-      setProcessingStatus('Analysis failed. Verify FastAPI ML service is running on port 8000.');
+      setProcessingStatus('Analysis failed. Make sure the ML service is running (port 8000).');
     } finally {
       setIsProcessing(false);
     }
@@ -155,16 +208,34 @@ export default function TrafficCongestionPage() {
 
   const handleResolveAlert = async (id) => {
     try {
-      await axios.patch(`${BACKEND_URL}/api/congestion/resolve/${id}`);
+      await axios.patch(`${BACKEND_URL}/api/congestion/resolve/${id}`, {}, { headers: authHeaders() });
+
+      // Audit log: who dismissed which alert
+      const dismissed = alerts.find((a) => a._id === id);
+      logActivity({
+        action: 'ALERT_RESOLVE',
+        cameraId: dismissed?.cameraId || '',
+        query: String(id),
+        summary: dismissed
+          ? `Dismissed ${dismissed.congestionState || dismissed.eventType || 'congestion'} alert (${dismissed.vehicleCount ?? 0} vehicles)`
+          : 'Dismissed congestion alert',
+        details: {
+          alertId: id,
+          reasoning: dismissed?.reasoning || null,
+          createdAt: dismissed?.createdAt || null,
+        },
+      });
+
       setAlerts((prev) =>
         prev.map((item) => (item._id === id ? { ...item, resolved: true } : item))
       );
+      setActiveCount((c) => Math.max(0, c - 1));
     } catch (err) {
       console.error('Failed to resolve alert:', err);
     }
   };
 
-  const activeAlertsCount = alerts.filter((a) => !a.resolved).length;
+  const activeAlertsCount = activeCount;
   const maxDensity = alerts.length > 0 ? Math.max(...alerts.map((a) => a.vehicleCount || 0)) : 0;
   const filteredAlerts = alerts.filter((item) => {
     if (filter === 'ACTIVE') return !item.resolved;
@@ -178,7 +249,7 @@ export default function TrafficCongestionPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-slate-900">Traffic & Congestion Management</h1>
+            <h1 className="text-xl font-bold text-slate-900">Traffic Congestion Monitoring</h1>
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold ${
                 isConnected
@@ -191,11 +262,11 @@ export default function TrafficCongestionPage() {
                   isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
                 }`}
               />
-              {isConnected ? 'Socket.io Connected' : 'Disconnected'}
+              {isConnected ? 'Live updates on' : 'Live updates off'}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Real-time gridlock detection, bottleneck duration timers, and automated traffic incident feeds.
+            Detects congested and blocked roads from camera footage and raises alerts automatically.
           </p>
         </div>
 
@@ -211,7 +282,7 @@ export default function TrafficCongestionPage() {
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
-              Live CCTV
+              Live Camera
             </button>
             <button
               onClick={() => setFeedMode('BATCH')}
@@ -222,17 +293,10 @@ export default function TrafficCongestionPage() {
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              Batch Ingestion
+              Upload Video
             </button>
           </div>
 
-          <button
-            onClick={fetchAlerts}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Refresh Data
-          </button>
         </div>
       </div>
 
@@ -240,26 +304,18 @@ export default function TrafficCongestionPage() {
       <div className="flex items-center justify-between bg-slate-900 px-5 py-3.5 rounded-2xl border border-slate-800 text-slate-200">
         <div className="flex items-center gap-2">
           <Video className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Target Junction Stream:</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Camera:</span>
           <select
             value={selectedCamera}
             onChange={(e) => setSelectedCamera(e.target.value)}
             className="text-xs bg-slate-800 text-cyan-300 font-mono border border-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500"
           >
-            <option value="CAM_01">Junction 1 - Main Boulevard (CAM_01)</option>
-            <option value="CAM_02">Junction 2 - Expressway Flyover (CAM_02)</option>
-            <option value="CAM_03">Junction 3 - Downtown Underpass (CAM_03)</option>
+            <option value="CAM_01">CAM_01</option>
+            <option value="CAM_02">CAM_02</option>
+            <option value="CAM_03">CAM_03</option>
           </select>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-[11px] font-mono bg-blue-950/80 text-blue-300 border border-blue-800/60 px-2.5 py-1 rounded-md">
-            <ShieldCheck className="w-3 h-3 text-blue-400" /> cv2.pointPolygonTest Active
-          </span>
-          <span className="inline-flex items-center gap-1 text-[11px] font-mono bg-indigo-950/80 text-indigo-300 border border-indigo-800/60 px-2.5 py-1 rounded-md">
-            <Percent className="w-3 h-3 text-indigo-400" /> Relative Speed: &lt; 20% H_box/s
-          </span>
-        </div>
       </div>
 
       {/* CONTINUOUS LIVE CCTV STREAM VIEWPORT */}
@@ -272,27 +328,19 @@ export default function TrafficCongestionPage() {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
               </span>
               <h3 className="text-white font-semibold text-sm tracking-wide">
-                LIVE CCTV FEED: {selectedCamera} (Continuous Stream)
+                Live feed: {selectedCamera}
               </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono bg-emerald-950/80 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-md">
-                ● Live Inference Active
-              </span>
-              <span className="text-[11px] font-mono bg-blue-950/80 text-blue-400 border border-blue-800 px-2.5 py-1 rounded-md">
-                Road ROI Mask Active
-              </span>
             </div>
           </div>
 
           <div className="relative rounded-xl overflow-hidden bg-black border border-slate-800 aspect-video flex items-center justify-center">
             <img
               src={`${ML_SERVICE_URL}/live-traffic-feed/${selectedCamera}`}
-              alt="Real-time Traffic Camera Stream"
+              alt="Live traffic camera feed"
               className="w-full h-full object-contain"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "https://placehold.co/1280x720/0f172a/94a3b8?text=CCTV+Feed+Connecting+or+Video+Missing";
+                e.target.src = "https://placehold.co/1280x720/0f172a/94a3b8?text=Camera+feed+not+available";
               }}
             />
           </div>
@@ -304,8 +352,8 @@ export default function TrafficCongestionPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Surveillance Stream Ingestion</h2>
-              <p className="text-xs text-slate-500">Upload archived footage to perform full batch kinematic evaluation</p>
+              <h2 className="text-sm font-bold text-slate-900">Analyze a Video</h2>
+              <p className="text-xs text-slate-500">Upload recorded traffic footage to check it for congestion</p>
             </div>
             <Upload className="w-4 h-4 text-slate-400" />
           </div>
@@ -326,12 +374,12 @@ export default function TrafficCongestionPage() {
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing Stream...
+                  Analyzing video...
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Execute Stream Analysis
+                  Analyze Video
                 </>
               )}
             </button>
@@ -354,7 +402,7 @@ export default function TrafficCongestionPage() {
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                   </span>
                   <h3 className="text-white font-semibold text-sm tracking-wide">
-                    Annotated Batch Playback: {selectedCamera}
+                    Result video: {selectedCamera}
                   </h3>
                 </div>
               </div>
@@ -370,32 +418,51 @@ export default function TrafficCongestionPage() {
                   className="w-full h-full object-contain"
                 >
                   <source src={annotatedVideoUrl} type="video/mp4" />
-                  Your browser does not support HTML5 video streaming.
+                  Your browser cannot play this video.
                 </video>
               </div>
 
-              {latestCongestionEvent && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-                    <p className="text-[11px] font-medium text-slate-400">Diagnostic Reason</p>
-                    <p className="text-sm font-bold text-rose-400 mt-0.5">
-                      {latestCongestionEvent.reasoning || 'Critical Gridlock Detected'}
-                    </p>
+              {analysisResult && (() => {
+                const STATE_TEXT = {
+                  'Free Flow': 'text-emerald-400',
+                  'Slow Moving': 'text-amber-400',
+                  'Congested': 'text-orange-400',
+                  'Blocked': 'text-rose-400',
+                };
+                const worst = analysisResult.worst_state;
+                const peakCI = analysisResult.peak_congestion_index;
+                const sd = analysisResult.state_durations_sec || {};
+                const jamSec = (sd['Congested'] || 0) + (sd['Blocked'] || 0);
+                const totalSec = analysisResult.total_video_duration_sec || 0;
+                const jamPct = totalSec > 0 ? Math.round((jamSec / totalSec) * 100) : 0;
+                return (
+                  <div className="mt-4 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+                        <p className="text-[11px] font-medium text-slate-400">Result</p>
+                        <p className={`text-sm font-bold mt-0.5 ${STATE_TEXT[worst] || 'text-slate-200'}`}>
+                          {worst || '—'}
+                        </p>
+                      </div>
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+                        <p className="text-[11px] font-medium text-slate-400">Peak congestion index (0–1)</p>
+                        <p className="text-sm font-bold text-amber-400 mt-0.5">
+                          {typeof peakCI === 'number' ? peakCI.toFixed(2) : '—'}
+                        </p>
+                      </div>
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+                        <p className="text-[11px] font-medium text-slate-400">Time congested</p>
+                        <p className="text-sm font-bold text-sky-400 mt-0.5">
+                          {Math.round(jamSec)}s of {Math.round(totalSec)}s ({jamPct}%)
+                        </p>
+                      </div>
+                    </div>
+                    {latestCongestionEvent?.reasoning && (
+                      <p className="text-xs text-slate-400">{latestCongestionEvent.reasoning}</p>
+                    )}
                   </div>
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-                    <p className="text-[11px] font-medium text-slate-400">Road Capacity Occupancy</p>
-                    <p className="text-sm font-bold text-amber-400 mt-0.5">
-                      {latestCongestionEvent.occupancyPercentage || 85}% of Road Volume
-                    </p>
-                  </div>
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-                    <p className="text-[11px] font-medium text-slate-400">Stopped / Crawling Vehicles</p>
-                    <p className="text-sm font-bold text-sky-400 mt-0.5">
-                      {Math.round((latestCongestionEvent.stationaryRatio || 0.35) * 100)}% Stopped inside ROI
-                    </p>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </div>
@@ -405,7 +472,7 @@ export default function TrafficCongestionPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Gridlocks</p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Alerts</p>
             <h3 className="text-2xl font-extrabold text-rose-600 mt-1">{activeAlertsCount}</h3>
           </div>
           <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600">
@@ -415,7 +482,7 @@ export default function TrafficCongestionPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Peak ROI Density</p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Most Vehicles in One Alert</p>
             <h3 className="text-2xl font-extrabold text-sky-600 mt-1">
               {maxDensity} <span className="text-xs font-normal text-slate-500">vehicles</span>
             </h3>
@@ -427,7 +494,7 @@ export default function TrafficCongestionPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Monitored Junction</p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Selected Camera</p>
             <h3 className="text-2xl font-extrabold text-indigo-600 mt-1">{selectedCamera}</h3>
           </div>
           <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
@@ -440,8 +507,8 @@ export default function TrafficCongestionPage() {
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Traffic Density & Stationary Trend</h2>
-            <p className="text-xs text-slate-500">Real-time fluctuations in vehicle volume and stationary percentage</p>
+            <h2 className="text-sm font-bold text-slate-900">Recent Alerts</h2>
+            <p className="text-xs text-slate-500">Vehicles on the road and % stopped at the time of each alert</p>
           </div>
           <Activity className="w-4 h-4 text-slate-400" />
         </div>
@@ -473,12 +540,12 @@ export default function TrafficCongestionPage() {
                   }}
                 />
                 <Area type="monotone" dataKey="vehicles" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#colorVehicles)" name="Vehicles" />
-                <Area type="monotone" dataKey="stoppedRatio" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorRatio)" name="Stationary %" />
+                <Area type="monotone" dataKey="stoppedRatio" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorRatio)" name="Stopped %" />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-xs text-slate-400">
-              No historical trend data available. Run video analysis to generate metrics.
+              No alerts yet. Analyze a video to see results here.
             </div>
           )}
         </div>
@@ -488,12 +555,12 @@ export default function TrafficCongestionPage() {
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Incident Event Feed</h2>
-            <p className="text-xs text-slate-500">Live feed of automatically recorded gridlock alerts</p>
+            <h2 className="text-sm font-bold text-slate-900">Alerts</h2>
+            <p className="text-xs text-slate-500">Congestion alerts raised by the system, newest first</p>
           </div>
 
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-            {['ALL', 'ACTIVE', 'RESOLVED'].map((tab) => (
+            {[['ALL', 'All'], ['ACTIVE', 'Active'], ['RESOLVED', 'Dismissed']].map(([tab, label]) => (
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
@@ -503,7 +570,7 @@ export default function TrafficCongestionPage() {
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                {tab}
+                {label}
               </button>
             ))}
           </div>
@@ -512,7 +579,7 @@ export default function TrafficCongestionPage() {
         <div className="space-y-3">
           {filteredAlerts.length === 0 ? (
             <div className="text-center py-10 text-xs text-slate-400">
-              No incidents logged under current filter.
+              No alerts here.
             </div>
           ) : (
             filteredAlerts.map((alert) => (
@@ -534,13 +601,15 @@ export default function TrafficCongestionPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-slate-900">{alert.eventType || 'Gridlock Event'}</span>
+                      <span className="font-bold text-sm text-slate-900">
+                        {alert.congestionState ? `${alert.congestionState} traffic` : 'Congestion alert'}
+                      </span>
                       <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-200 text-slate-700">
                         {alert.cameraId || 'N/A'}
                       </span>
                       {alert.resolved && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Resolved
+                          <CheckCircle2 className="w-3 h-3" /> Dismissed
                         </span>
                       )}
                     </div>

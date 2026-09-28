@@ -508,6 +508,7 @@ import AlertsPage from "./pages/Operator/AlertsPage";
 // Active Admin Pages
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminUsers from "./pages/Admin/AdminUsers";
+import AdminAuditLog from "./pages/Admin/AdminAuditLog";
 // FIX: this import was missing, which crashed /admin/cameras.
 // Adjust the path/filename if your file is named differently.
 import AdminCameraManagement from "./pages/Admin/AdminCameraManagement";
@@ -588,6 +589,7 @@ export default function App() {
               <Route element={<AdminLayout />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/audit-log" element={<AdminAuditLog />} />
                 {/* Camera Approvals, Register Camera, and Live Cameras are
                     tabs inside this one page instead of separate routes. */}
                 <Route path="/admin/cameras" element={<AdminCameraManagement />} />

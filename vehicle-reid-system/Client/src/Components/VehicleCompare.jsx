@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";/* =========================
+import React, { useState, useEffect } from "react";
+import { logActivity } from "../api/audit";
+import AuditReasonInput from "./AuditReasonInput";
+
+/* =========================
    Icons
 ========================= */
 
@@ -247,6 +251,7 @@ const VehicleReIDEngine = () => {
    const [camSort, setCamSort] = useState("score");
   const [threshold, setThreshold] = useState(40); // percentage, 0-100, user-controlled
   const [modelInfo, setModelInfo] = useState(null);
+  const [reason, setReason] = useState(""); // saved in the admin audit log
 
   useEffect(() => {
     fetch(`${API_BASE}/model-info`, {
@@ -378,6 +383,33 @@ const VehicleReIDEngine = () => {
         queryCamera: data.query_camera,
         matches: matchesWithImages,
       });
+
+      // Audit log: who searched for which vehicle, why, and what came back
+      const best = matches.reduce(
+        (top, m) => ((Number(m.confidence) || 0) > (Number(top?.confidence) || 0) ? m : top),
+        null
+      );
+      logActivity({
+        action: "REID_SEARCH",
+        cameraId:
+          data.query_camera !== undefined && data.query_camera !== null
+            ? `Camera ${data.query_camera}`
+            : "",
+        query: queryFile.name,
+        reason,
+        summary: best
+          ? `Top match: camera ${best.camera} (${((Number(best.confidence) || 0) * 100).toFixed(1)}%) · ${matches.length} camera${matches.length === 1 ? "" : "s"} matched`
+          : "No matching vehicle found",
+        details: {
+          query_camera: data.query_camera ?? null,
+          elapsed_seconds: Number(elapsed.toFixed(2)),
+          matches: matches.slice(0, 10).map((m) => ({
+            camera: m.camera,
+            file: m.matched_filename,
+            confidence: Number(m.confidence) || 0,
+          })),
+        },
+      });
     } catch (error) {
       console.error("Find Match error:", error);
       alert(error.message || "Unable to find a matching vehicle.");
@@ -391,6 +423,7 @@ const VehicleReIDEngine = () => {
     setQueryPreview(null);
     setMatchResult(null);
     setCamSort("score");
+    setReason("");
   };
 
   const sortedMatches = matchResult?.matches
@@ -476,6 +509,10 @@ const VehicleReIDEngine = () => {
           onChange={handleQueryFileChange}
           label="Upload vehicle image"
         />
+
+        <div style={{ marginTop: "16px" }}>
+          <AuditReasonInput value={reason} onChange={setReason} id="reid-reason" />
+        </div>
 
         <button
           type="button"
