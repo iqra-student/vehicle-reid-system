@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import io from "socket.io-client";
+import { Link } from "react-router-dom";
+import { authHeaders, ACTION_LABELS } from "../../api/audit";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Scan, Bell, BarChart2, RotateCcw, ShieldCheck, Activity,
   AlertTriangle, CheckCircle2, Clock, Users, Camera, CreditCard,
-  ArrowRight,
+  ArrowRight, FileText,
 } from "lucide-react";
 
 const BACKEND_URL = "http://localhost:5000";
@@ -31,6 +33,7 @@ export default function AdminDashboard() {
   const [plateTracks, setPlateTracks] = useState([]);
   const [reidConfidence, setReidConfidence] = useState([]);
   const [barData, setBarData] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,20 +62,32 @@ export default function AdminDashboard() {
   const fetchDashboardMetrics = async () => {
     setLoading(true);
     try {
-      const [alertsRes, usersRes, platesRes, camerasRes, mlStatsRes, mlHourlyRes] =
+      // Admin routes are protected, so send the login token with every server request
+      const auth = { headers: authHeaders() };
+      const [alertsRes, usersRes, platesRes, camerasRes, mlStatsRes, mlHourlyRes, activityRes] =
         await Promise.allSettled([
-          axios.get(`${BACKEND_URL}/api/congestion/active`),
-          axios.get(`${BACKEND_URL}/api/admin/users`),
-          axios.get(`${BACKEND_URL}/api/admin/recent-plates`),
-          axios.get(`${BACKEND_URL}/api/cameras`),
+          axios.get(`${BACKEND_URL}/api/congestion/active`, auth),
+          axios.get(`${BACKEND_URL}/api/admin/users`, auth),
+          axios.get(`${BACKEND_URL}/api/admin/recent-plates`, auth),
+          axios.get(`${BACKEND_URL}/api/cameras`, auth),
           axios.get(`${ML_URL}/dashboard-stats`),
           axios.get(`${ML_URL}/dashboard-hourly`),
+          axios.get(`${BACKEND_URL}/api/audit`, { ...auth, params: { limit: 6 } }),
         ]);
+
+      // ── Operator activity (audit log) ──
+      if (activityRes.status === "fulfilled") {
+        setRecentActivity(activityRes.value.data?.logs || []);
+      }
 
       // ── Congestion ──
       if (alertsRes.status === "fulfilled" && alertsRes.value.data?.status === "success") {
         const rawAlerts = alertsRes.value.data.data || [];
-        setActiveAlertsCount(rawAlerts.filter((a) => !a.resolved).length);
+        // Server sends the true number of undismissed alerts (the list itself is only the latest 20)
+        const serverCount = alertsRes.value.data.activeCount;
+        setActiveAlertsCount(
+          typeof serverCount === "number" ? serverCount : rawAlerts.filter((a) => !a.resolved).length
+        );
         setRecentIncidents(
           rawAlerts.slice(0, 10).map((alert, idx) => ({
             id: `INC-${alert._id ? alert._id.slice(-4).toUpperCase() : 8820 - idx}`,
@@ -89,6 +104,9 @@ export default function AdminDashboard() {
       }
 
       // ── Users ──
+      if (usersRes.status === "rejected") {
+        console.warn("Users request failed:", usersRes.reason?.response?.status, usersRes.reason?.response?.data);
+      }
       if (usersRes.status === "fulfilled") {
         const d = usersRes.value.data;
         const list = d?.users || d?.data || (Array.isArray(d) ? d : []);
@@ -403,6 +421,73 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* ─── RECENT OPERATOR ACTIVITY ───────────────── */}
+        <section
+          className="rounded-2xl overflow-hidden"
+          style={{
+            backgroundColor: CARD_BG,
+            border: `1px solid rgba(13,36,64,0.06)`,
+            boxShadow: "0 10px 28px rgba(13,36,64,0.06)",
+          }}
+        >
+          <div className="px-6 py-5 border-b flex items-center justify-between flex-wrap gap-3" style={{ borderColor: "rgba(13,36,64,0.06)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: MIST, color: SAPPHIRE }}>
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-bold" style={{ color: INK }}>Recent Operator Activity</div>
+                <div className="text-xs mt-0.5" style={{ color: STEEL }}>Latest entries from the audit log</div>
+              </div>
+            </div>
+            <Link
+              to="/admin/audit-log"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
+              style={{ backgroundColor: MIST, color: SAPPHIRE }}
+            >
+              View full audit log
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {recentActivity.length === 0 ? (
+            <div className="text-center py-10 text-xs" style={{ color: STEEL }}>
+              <div className="flex flex-col items-center gap-2">
+                <FileText className="w-6 h-6 opacity-40" />
+                No operator activity recorded yet.
+              </div>
+            </div>
+          ) : (
+            <ul>
+              {recentActivity.map((l) => (
+                <li
+                  key={l._id}
+                  className="px-6 py-3.5 flex items-center gap-4 text-xs"
+                  style={{ borderBottom: `1px solid #EEF2F8` }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-[12px] shrink-0"
+                    style={{ backgroundColor: MIST, color: SAPPHIRE }}
+                  >
+                    {(l.userName || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate" style={{ color: INK }}>
+                      <span className="font-semibold">{l.userName}</span>
+                      <span style={{ color: STEEL }}> · {ACTION_LABELS[l.action] || l.action}</span>
+                      {l.cameraId && <span className="font-mono" style={{ color: SAPPHIRE }}> · {l.cameraId}</span>}
+                    </div>
+                    <div className="truncate mt-0.5" style={{ color: SAPPHIRE }}>{l.summary || "—"}</div>
+                  </div>
+                  <div className="font-mono text-[10.5px] shrink-0" style={{ color: STEEL }}>
+                    {new Date(l.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* ─── RECENT PLATE READS ─────────────────────── */}

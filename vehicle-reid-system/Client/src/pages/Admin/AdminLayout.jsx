@@ -1,12 +1,13 @@
 import React from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { LayoutDashboard, Video, Users, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Video, Users, LogOut, ShieldCheck,ScrollText  } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Camera Management", path: "/admin/cameras", icon: Video },
   { name: "User Management", path: "/admin/users", icon: Users },
+  { name: "Audit Log", path: "/admin/audit-log", icon: ScrollText }
 ];
 
 export default function AdminLayout() {
