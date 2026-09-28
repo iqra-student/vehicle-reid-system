@@ -200,6 +200,14 @@ export default function PlateSearchPage() {
         const videoRes = await axiosInstance.get(`/plate-track-result/${jobId}`, {
           responseType: "blob",
         });
+        console.log("Video response:", videoRes);
+console.log("Content-Type:", videoRes.headers["content-type"]);
+console.log("Blob type:", videoRes.data.type);
+console.log("Blob size:", videoRes.data.size);
+const videoBlob = new Blob([videoRes.data], {
+  type: "video/mp4",
+});
+
         const url = URL.createObjectURL(videoRes.data);
         setTrackVideoUrl((prev) => {
           if (prev) URL.revokeObjectURL(prev);

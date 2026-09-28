@@ -1,6 +1,8 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
+const jwt = require('jsonwebtoken');
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -19,6 +21,33 @@ const io = new Server(server, {
     origin: '*',
     methods: ['GET', 'POST'],
   },
+});
+
+app.set('io', io);
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (token) {
+    try {
+      socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      // invalid token: stays anonymous
+    }
+  }
+  next();
+});
+
+io.on('connection', (socket) => {
+  console.log(`[Socket.io] Client connected: ${socket.id}`);
+
+  if (socket.user) {
+    socket.join(`user:${socket.user.id}`);
+    if (socket.user.role === 'admin') socket.join('admins');
+  }
+
+  socket.on('disconnect', () => {
+    console.log(`[Socket.io] Client disconnected: ${socket.id}`);
+  });
 });
 
 io.on('connection', (socket) => {
@@ -82,6 +111,7 @@ const authRoutes = require('./routes/authRoutes');
 const cameraRoutes = require('./routes/cameraRoutes');
 const detectionRoutes = require('./routes/detectionRoutes');
 const adminUserRoutes = require("./routes/adminUsers");
+const adminPlateRoutes = require("./routes/adminPlates");
 
 // Module 4 - Congestion Detection
 const congestionRoutes = require('./routes/congestionRoutes')(io);
@@ -89,6 +119,7 @@ const congestionRoutes = require('./routes/congestionRoutes')(io);
 app.use('/api/auth', authRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin", adminPlateRoutes);
 
 // Module 3 / vehicle detection / comparison routes
 app.use('/api', detectionRoutes);

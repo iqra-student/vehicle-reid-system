@@ -69,6 +69,86 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// POST /api/auth/admin-signup
+// Creates Admin Accounts — restricted to a company email domain
+router.post("/admin-signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const normalizedName = name?.trim();
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedName || !normalizedEmail || !password) {
+      return res.status(400).json({
+        message: "Please fill in all fields",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters",
+      });
+    }
+
+    const adminDomain = (process.env.ADMIN_EMAIL_DOMAIN || "").toLowerCase();
+    const emailDomain = normalizedEmail.split("@")[1];
+
+    if (!adminDomain || emailDomain !== adminDomain) {
+      return res.status(403).json({
+        message: `Admin accounts must use a "${adminDomain}" e-mail address`,
+      });
+    }
+
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists with this email",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // This route creates an admin (unlike public /signup, which forces "operator")
+    const user = await User.create({
+      name: normalizedName,
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Admin signup error:", err);
+
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+  }
+});
+
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {

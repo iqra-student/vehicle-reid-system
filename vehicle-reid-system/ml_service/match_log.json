@@ -343,5 +343,3800 @@
         "confidencePercentage": "0.0%"
       }
     ]
+  },
+  {
+    "timestamp": "2026-09-27 19:13:30",
+    "query_filename": "0065_c006_00061310_0.jpg",
+    "query_camera": 6,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0065_c002_00062995_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0065_c003_00060225_1.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0065_c004_00060105_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0065_c010_00061215_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0065_c011_00061295_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0065_c014_00067520_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0065_c015_00067270_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0065_c001_00064630_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0065_c013_00064935_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0065_c008_00059875_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0065_c009_00059985_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0065_c016_00068355_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0065_c017_00065790_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0065_c012_00065115_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0065_c019_00065960_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0118_c005_00089800_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0118_c007_00089885_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 19:20:37",
+    "query_filename": "0096_c016_00027015_0.jpg",
+    "query_camera": 16,
+    "matches": [
+      {
+        "camera": 15,
+        "matched_filename": "0096_c015_00026650_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0096_c007_00030630_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0096_c013_00025100_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0090_c003_00078435_1.jpg",
+        "confidence": 0.9851,
+        "confidencePercentage": "98.51%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0105_c014_00069880_0.jpg",
+        "confidence": 0.8922,
+        "confidencePercentage": "89.22%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0113_c004_00076220_0.jpg",
+        "confidence": 0.8564,
+        "confidencePercentage": "85.64%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0090_c009_00078225_0.jpg",
+        "confidence": 0.8535,
+        "confidencePercentage": "85.35%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0576_c019_00066745_1.jpg",
+        "confidence": 0.7888,
+        "confidencePercentage": "78.88%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0009_c017_00068800_0.jpg",
+        "confidence": 0.4624,
+        "confidencePercentage": "46.24%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0108_c006_00076665_3.jpg",
+        "confidence": 0.3614,
+        "confidencePercentage": "36.14%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0113_c001_00080765_0.jpg",
+        "confidence": 0.2047,
+        "confidencePercentage": "20.47%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0009_c012_00068000_0.jpg",
+        "confidence": 0.0467,
+        "confidencePercentage": "4.67%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0096_c005_00030530_0.jpg",
+        "confidence": 0.0282,
+        "confidencePercentage": "2.82%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0108_c008_00077785_0.jpg",
+        "confidence": 0.0169,
+        "confidencePercentage": "1.69%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0108_c010_00076930_0.jpg",
+        "confidence": 0.0039,
+        "confidencePercentage": "0.39%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0113_c011_00076850_0.jpg",
+        "confidence": 0.0021,
+        "confidencePercentage": "0.21%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0598_c002_00045685_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 19:22:27",
+    "query_filename": "0038_c001_00001200_0.jpg",
+    "query_camera": 1,
+    "matches": [
+      {
+        "camera": 3,
+        "matched_filename": "0038_c003_00008480_1.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0038_c016_00004340_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0038_c013_00001635_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0035_c004_00001775_1.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.9996,
+        "confidencePercentage": "99.96%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0038_c014_00004120_0.jpg",
+        "confidence": 0.9995,
+        "confidencePercentage": "99.95%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.9993,
+        "confidencePercentage": "99.93%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.9972,
+        "confidencePercentage": "99.72%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9969,
+        "confidencePercentage": "99.69%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9966,
+        "confidencePercentage": "99.66%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.9398,
+        "confidencePercentage": "93.98%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.0693,
+        "confidencePercentage": "6.93%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0518_c018_00046755_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 19:28:05",
+    "query_filename": "0063_c019_00008480_0.jpg",
+    "query_camera": 19,
+    "matches": [
+      {
+        "camera": 13,
+        "matched_filename": "0063_c013_00009375_0.jpg",
+        "confidence": 0.9984,
+        "confidencePercentage": "99.84%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0063_c001_00009545_0.jpg",
+        "confidence": 0.4485,
+        "confidencePercentage": "44.85%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0063_c002_00009965_1.jpg",
+        "confidence": 0.4338,
+        "confidencePercentage": "43.38%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0063_c012_00009290_0.jpg",
+        "confidence": 0.4123,
+        "confidencePercentage": "41.23%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0063_c016_00007580_0.jpg",
+        "confidence": 0.0461,
+        "confidencePercentage": "4.61%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0727_c011_00000205_0.jpg",
+        "confidence": 0.0224,
+        "confidencePercentage": "2.24%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0727_c003_00000860_0.jpg",
+        "confidence": 0.0005,
+        "confidencePercentage": "0.05%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0063_c017_00008640_1.jpg",
+        "confidence": 0.0003,
+        "confidencePercentage": "0.03%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0727_c004_00000770_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0662_c005_00005645_2.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0476_c006_00017285_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0662_c007_00005730_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0720_c008_00069575_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0720_c009_00069665_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0727_c010_00000390_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0699_c014_00041295_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0660_c015_00030865_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 19:30:47",
+    "query_filename": "0030_c007_00054885_1.jpg",
+    "query_camera": 7,
+    "matches": [
+      {
+        "camera": 16,
+        "matched_filename": "0014_c016_00039135_0.jpg",
+        "confidence": 0.9996,
+        "confidencePercentage": "99.96%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9985,
+        "confidencePercentage": "99.85%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0035_c004_00001775_1.jpg",
+        "confidence": 0.9974,
+        "confidencePercentage": "99.74%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0038_c014_00004120_0.jpg",
+        "confidence": 0.9964,
+        "confidencePercentage": "99.64%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0014_c019_00040055_0.jpg",
+        "confidence": 0.9924,
+        "confidencePercentage": "99.24%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0014_c013_00040815_0.jpg",
+        "confidence": 0.9896,
+        "confidencePercentage": "98.96%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.9887,
+        "confidencePercentage": "98.87%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9858,
+        "confidencePercentage": "98.58%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0014_c015_00039390_0.jpg",
+        "confidence": 0.9832,
+        "confidencePercentage": "98.32%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9796,
+        "confidencePercentage": "97.96%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.978,
+        "confidencePercentage": "97.8%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9735,
+        "confidencePercentage": "97.35%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0035_c003_00001855_0.jpg",
+        "confidence": 0.9503,
+        "confidencePercentage": "95.03%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9221,
+        "confidencePercentage": "92.21%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0038_c008_00008245_0.jpg",
+        "confidence": 0.5769,
+        "confidencePercentage": "57.69%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.5042,
+        "confidencePercentage": "50.42%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.3757,
+        "confidencePercentage": "37.57%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0518_c018_00046755_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 19:36:02",
+    "query_filename": "0042_c006_00086245_0.jpg",
+    "query_camera": 6,
+    "matches": [
+      {
+        "camera": 4,
+        "matched_filename": "0042_c004_00087050_1.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0042_c011_00086225_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0042_c017_00082760_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0042_c001_00085285_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0042_c012_00083325_1.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0042_c002_00085790_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0042_c003_00087090_1.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0042_c010_00086390_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0042_c013_00083425_0.jpg",
+        "confidence": 0.999,
+        "confidencePercentage": "99.9%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0118_c005_00089800_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0118_c007_00089885_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0177_c014_00068565_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0622_c015_00065805_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0118_c016_00065230_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0106_c019_00018525_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 19:38:16",
+    "query_filename": "0106_c017_00018825_0.jpg",
+    "query_camera": 17,
+    "matches": [
+      {
+        "camera": 15,
+        "matched_filename": "0106_c015_00015935_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0106_c019_00018525_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0106_c016_00015630_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0101_c001_00043650_1.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0106_c014_00015880_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0102_c013_00007955_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0110_c006_00021880_0.jpg",
+        "confidence": 0.9972,
+        "confidencePercentage": "99.72%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0090_c004_00078385_0.jpg",
+        "confidence": 0.9898,
+        "confidencePercentage": "98.98%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0101_c012_00044135_0.jpg",
+        "confidence": 0.985,
+        "confidencePercentage": "98.5%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0110_c002_00019600_0.jpg",
+        "confidence": 0.9832,
+        "confidencePercentage": "98.32%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0110_c008_00022735_0.jpg",
+        "confidence": 0.9707,
+        "confidencePercentage": "97.07%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0108_c007_00078255_0.jpg",
+        "confidence": 0.8181,
+        "confidencePercentage": "81.81%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0113_c011_00076850_0.jpg",
+        "confidence": 0.7125,
+        "confidencePercentage": "71.25%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0089_c005_00058765_0.jpg",
+        "confidence": 0.302,
+        "confidencePercentage": "30.2%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0110_c009_00022635_0.jpg",
+        "confidence": 0.1789,
+        "confidencePercentage": "17.89%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0113_c003_00076310_0.jpg",
+        "confidence": 0.133,
+        "confidencePercentage": "13.3%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0104_c010_00017750_0.jpg",
+        "confidence": 0.057,
+        "confidencePercentage": "5.7%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0.0134,
+        "confidencePercentage": "1.34%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 20:57:45",
+    "query_filename": "0002_c007_00085080_0.jpg",
+    "query_camera": 7,
+    "matches": [
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.9991,
+        "confidencePercentage": "99.91%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.999,
+        "confidencePercentage": "99.9%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9976,
+        "confidencePercentage": "99.76%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9972,
+        "confidencePercentage": "99.72%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9962,
+        "confidencePercentage": "99.62%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.9954,
+        "confidencePercentage": "99.54%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.9939,
+        "confidencePercentage": "99.39%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9904,
+        "confidencePercentage": "99.04%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.984,
+        "confidencePercentage": "98.4%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0177_c017_00069460_0.jpg",
+        "confidence": 0.0032,
+        "confidencePercentage": "0.32%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0177_c014_00068565_0.jpg",
+        "confidence": 0.0022,
+        "confidencePercentage": "0.22%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0177_c001_00072000_0.jpg",
+        "confidence": 0.0014,
+        "confidencePercentage": "0.14%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0177_c013_00070070_0.jpg",
+        "confidence": 0.0008,
+        "confidencePercentage": "0.08%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0177_c012_00069995_1.jpg",
+        "confidence": 0.0003,
+        "confidencePercentage": "0.03%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0177_c015_00068575_0.jpg",
+        "confidence": 0.0002,
+        "confidencePercentage": "0.02%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0177_c016_00068270_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0086_c019_00080900_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 20:58:54",
+    "query_filename": "0030_c009_00049855_0.jpg",
+    "query_camera": 9,
+    "matches": [
+      {
+        "camera": 3,
+        "matched_filename": "0035_c003_00001855_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0038_c004_00008415_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0038_c014_00004120_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0038_c013_00001635_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0038_c016_00004340_0.jpg",
+        "confidence": 0.9996,
+        "confidencePercentage": "99.96%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.9995,
+        "confidencePercentage": "99.95%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.9991,
+        "confidencePercentage": "99.91%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.994,
+        "confidencePercentage": "99.4%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9938,
+        "confidencePercentage": "99.38%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.8383,
+        "confidencePercentage": "83.83%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0518_c018_00046755_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 21:00:16",
+    "query_filename": "0027_c016_00011185_0.jpg",
+    "query_camera": 16,
+    "matches": [
+      {
+        "camera": 14,
+        "matched_filename": "0027_c014_00011385_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0027_c015_00011440_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0027_c017_00012150_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0027_c019_00012005_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0014_c012_00040735_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0027_c013_00012855_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0014_c001_00041040_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0035_c003_00001855_0.jpg",
+        "confidence": 0.9984,
+        "confidencePercentage": "99.84%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9977,
+        "confidencePercentage": "99.77%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9846,
+        "confidencePercentage": "98.46%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9743,
+        "confidencePercentage": "97.43%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0035_c004_00001775_1.jpg",
+        "confidence": 0.9739,
+        "confidencePercentage": "97.39%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.886,
+        "confidencePercentage": "88.6%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.4574,
+        "confidencePercentage": "45.74%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.4164,
+        "confidencePercentage": "41.64%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.1557,
+        "confidencePercentage": "15.57%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0518_c018_00046755_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 22:05:38",
+    "query_filename": "0002_c005_00084980_0.jpg",
+    "query_camera": 5,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.983,
+        "confidencePercentage": "98.3%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.97,
+        "confidencePercentage": "97.0%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9682,
+        "confidencePercentage": "96.82%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9656,
+        "confidencePercentage": "96.56%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.745,
+        "confidencePercentage": "74.5%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.5465,
+        "confidencePercentage": "54.65%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.1953,
+        "confidencePercentage": "19.53%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.1041,
+        "confidencePercentage": "10.41%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0296_c016_00058220_1.jpg",
+        "confidence": 0.0243,
+        "confidencePercentage": "2.43%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0296_c019_00059405_1.jpg",
+        "confidence": 0.004,
+        "confidencePercentage": "0.4%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0295_c015_00036585_0.jpg",
+        "confidence": 0.0031,
+        "confidencePercentage": "0.31%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0295_c017_00037435_0.jpg",
+        "confidence": 0.0021,
+        "confidencePercentage": "0.21%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0295_c014_00036585_0.jpg",
+        "confidence": 0.0019,
+        "confidencePercentage": "0.19%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0295_c001_00038405_0.jpg",
+        "confidence": 0.0018,
+        "confidencePercentage": "0.18%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0296_c012_00060335_1.jpg",
+        "confidence": 0.0013,
+        "confidencePercentage": "0.13%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0296_c013_00060505_1.jpg",
+        "confidence": 0.0004,
+        "confidencePercentage": "0.04%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 22:07:12",
+    "query_filename": "0066_c001_00059990_0.jpg",
+    "query_camera": 1,
+    "matches": [
+      {
+        "camera": 3,
+        "matched_filename": "0065_c003_00060225_1.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0065_c004_00060105_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0065_c009_00059985_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0065_c011_00061295_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0065_c014_00067520_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0065_c016_00068355_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0065_c017_00065790_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0066_c019_00058085_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0065_c012_00065115_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0065_c002_00062995_0.jpg",
+        "confidence": 0.9963,
+        "confidencePercentage": "99.63%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0065_c008_00059875_0.jpg",
+        "confidence": 0.9963,
+        "confidencePercentage": "99.63%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0065_c006_00061310_0.jpg",
+        "confidence": 0.996,
+        "confidencePercentage": "99.6%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0065_c010_00061215_0.jpg",
+        "confidence": 0.995,
+        "confidencePercentage": "99.5%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0065_c015_00067270_0.jpg",
+        "confidence": 0.9947,
+        "confidencePercentage": "99.47%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0065_c013_00064935_0.jpg",
+        "confidence": 0.9887,
+        "confidencePercentage": "98.87%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0118_c005_00089800_1.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0118_c007_00089885_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0606_c018_00089190_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 22:10:46",
+    "query_filename": "0035_c004_00001795_0.jpg",
+    "query_camera": 4,
+    "matches": [
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0038_c014_00004120_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0038_c013_00001635_0.jpg",
+        "confidence": 0.9965,
+        "confidencePercentage": "99.65%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9936,
+        "confidencePercentage": "99.36%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9931,
+        "confidencePercentage": "99.31%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9919,
+        "confidencePercentage": "99.19%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.9865,
+        "confidencePercentage": "98.65%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9832,
+        "confidencePercentage": "98.32%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0038_c003_00008480_1.jpg",
+        "confidence": 0.9811,
+        "confidencePercentage": "98.11%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9773,
+        "confidencePercentage": "97.73%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.9611,
+        "confidencePercentage": "96.11%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0038_c016_00004340_0.jpg",
+        "confidence": 0.9557,
+        "confidencePercentage": "95.57%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.7751,
+        "confidencePercentage": "77.51%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.5394,
+        "confidencePercentage": "53.94%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.42,
+        "confidencePercentage": "42.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.024,
+        "confidencePercentage": "2.4%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 22:12:12",
+    "query_filename": "0096_c016_00027015_0.jpg",
+    "query_camera": 16,
+    "matches": [
+      {
+        "camera": 15,
+        "matched_filename": "0096_c015_00026650_0.jpg",
+        "confidence": 0.9959,
+        "confidencePercentage": "99.59%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0096_c013_00025100_0.jpg",
+        "confidence": 0.9765,
+        "confidencePercentage": "97.65%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0096_c007_00030630_0.jpg",
+        "confidence": 0.5537,
+        "confidencePercentage": "55.37%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0090_c003_00078435_1.jpg",
+        "confidence": 0.0055,
+        "confidencePercentage": "0.55%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0576_c019_00066745_1.jpg",
+        "confidence": 0.0012,
+        "confidencePercentage": "0.12%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0009_c014_00070055_0.jpg",
+        "confidence": 0.0004,
+        "confidencePercentage": "0.04%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0108_c006_00076665_3.jpg",
+        "confidence": 0.0003,
+        "confidencePercentage": "0.03%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0108_c009_00077755_0.jpg",
+        "confidence": 0.0002,
+        "confidencePercentage": "0.02%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0009_c001_00067355_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0009_c012_00068000_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0720_c002_00072140_2.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0108_c004_00077510_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0096_c005_00030530_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0720_c008_00069575_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0118_c010_00088410_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0108_c011_00076715_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0009_c017_00068800_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27 22:28:43",
+    "query_filename": "0009_c001_00067370_0.jpg",
+    "query_camera": 1,
+    "matches": [
+      {
+        "camera": 14,
+        "matched_filename": "0009_c014_00070055_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0009_c012_00068000_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0009_c017_00068800_0.jpg",
+        "confidence": 0.978,
+        "confidencePercentage": "97.8%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0090_c003_00078435_1.jpg",
+        "confidence": 0.9653,
+        "confidencePercentage": "96.53%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0096_c007_00030630_0.jpg",
+        "confidence": 0.7069,
+        "confidencePercentage": "70.69%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0102_c013_00007955_0.jpg",
+        "confidence": 0.5748,
+        "confidencePercentage": "57.48%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0096_c015_00026650_0.jpg",
+        "confidence": 0.558,
+        "confidencePercentage": "55.8%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0273_c006_00037765_0.jpg",
+        "confidence": 0.3203,
+        "confidencePercentage": "32.03%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0273_c011_00037775_1.jpg",
+        "confidence": 0.2665,
+        "confidencePercentage": "26.65%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0102_c019_00006585_0.jpg",
+        "confidence": 0.2107,
+        "confidencePercentage": "21.07%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0090_c004_00078385_0.jpg",
+        "confidence": 0.1899,
+        "confidencePercentage": "18.99%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0096_c016_00027015_0.jpg",
+        "confidence": 0.1843,
+        "confidencePercentage": "18.43%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0273_c002_00039110_1.jpg",
+        "confidence": 0.0019,
+        "confidencePercentage": "0.19%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0089_c005_00058765_0.jpg",
+        "confidence": 0.0014,
+        "confidencePercentage": "0.14%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0108_c009_00077755_0.jpg",
+        "confidence": 0.0007,
+        "confidencePercentage": "0.07%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0273_c010_00037600_0.jpg",
+        "confidence": 0.0003,
+        "confidencePercentage": "0.03%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0273_c008_00036225_0.jpg",
+        "confidence": 0.0002,
+        "confidencePercentage": "0.02%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 13:26:29",
+    "query_filename": "0002_c007_00085080_0.jpg",
+    "query_camera": 7,
+    "matches": [
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.7325,
+        "confidencePercentage": "73.25%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.5669,
+        "confidencePercentage": "56.69%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.542,
+        "confidencePercentage": "54.2%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.4459,
+        "confidencePercentage": "44.59%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.4299,
+        "confidencePercentage": "42.99%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.406,
+        "confidencePercentage": "40.6%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.1672,
+        "confidencePercentage": "16.72%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0005_c011_00076850_1.jpg",
+        "confidence": 0.115,
+        "confidencePercentage": "11.5%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.0651,
+        "confidencePercentage": "6.51%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0295_c014_00036585_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0177_c013_00070070_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0177_c015_00068575_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0298_c016_00044940_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0295_c017_00037435_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0296_c019_00059405_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0300_c001_00080690_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0296_c012_00060335_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 13:27:30",
+    "query_filename": "0002_c005_00084980_0.jpg",
+    "query_camera": 5,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.983,
+        "confidencePercentage": "98.3%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.97,
+        "confidencePercentage": "97.0%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9682,
+        "confidencePercentage": "96.82%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9656,
+        "confidencePercentage": "96.56%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.745,
+        "confidencePercentage": "74.5%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.5465,
+        "confidencePercentage": "54.65%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.1953,
+        "confidencePercentage": "19.53%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.1041,
+        "confidencePercentage": "10.41%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0296_c016_00058220_1.jpg",
+        "confidence": 0.0243,
+        "confidencePercentage": "2.43%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0296_c019_00059405_1.jpg",
+        "confidence": 0.004,
+        "confidencePercentage": "0.4%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0295_c015_00036585_0.jpg",
+        "confidence": 0.0031,
+        "confidencePercentage": "0.31%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0295_c017_00037435_0.jpg",
+        "confidence": 0.0021,
+        "confidencePercentage": "0.21%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0295_c014_00036585_0.jpg",
+        "confidence": 0.0019,
+        "confidencePercentage": "0.19%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0295_c001_00038405_0.jpg",
+        "confidence": 0.0018,
+        "confidencePercentage": "0.18%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0296_c012_00060335_1.jpg",
+        "confidence": 0.0013,
+        "confidencePercentage": "0.13%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0296_c013_00060505_1.jpg",
+        "confidence": 0.0004,
+        "confidencePercentage": "0.04%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 13:39:09",
+    "query_filename": "0006_c015_00022375_0.jpg",
+    "query_camera": 15,
+    "matches": [
+      {
+        "camera": 19,
+        "matched_filename": "0006_c019_00023095_0.jpg",
+        "confidence": 0.0153,
+        "confidencePercentage": "1.53%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0207_c016_00010450_0.jpg",
+        "confidence": 0.0028,
+        "confidencePercentage": "0.28%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0380_c004_00060745_1.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0207_c014_00010170_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0207_c001_00029420_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0365_c002_00025585_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0373_c003_00075945_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0192_c005_00079340_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0365_c006_00033645_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0388_c007_00071680_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0380_c008_00060610_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0388_c009_00071140_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0373_c010_00076545_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0365_c011_00033665_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0380_c017_00066340_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0380_c012_00065145_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0207_c013_00029180_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 13:40:42",
+    "query_filename": "0002_c004_00084250_0.jpg",
+    "query_camera": 4,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9951,
+        "confidencePercentage": "99.51%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9934,
+        "confidencePercentage": "99.34%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.9876,
+        "confidencePercentage": "98.76%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.9756,
+        "confidencePercentage": "97.56%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9562,
+        "confidencePercentage": "95.62%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.9454,
+        "confidencePercentage": "94.54%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.9388,
+        "confidencePercentage": "93.88%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0296_c016_00058220_1.jpg",
+        "confidence": 0.003,
+        "confidencePercentage": "0.3%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0300_c017_00077925_0.jpg",
+        "confidence": 0.0021,
+        "confidencePercentage": "0.21%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0300_c001_00080690_0.jpg",
+        "confidence": 0.001,
+        "confidencePercentage": "0.1%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0296_c019_00059405_1.jpg",
+        "confidence": 0.0009,
+        "confidencePercentage": "0.09%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0300_c014_00076820_0.jpg",
+        "confidence": 0.0008,
+        "confidencePercentage": "0.08%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0177_c015_00068575_0.jpg",
+        "confidence": 0.0003,
+        "confidencePercentage": "0.03%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0296_c012_00060335_1.jpg",
+        "confidence": 0.0002,
+        "confidencePercentage": "0.02%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0300_c013_00078770_0.jpg",
+        "confidence": 0.0002,
+        "confidencePercentage": "0.02%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 16:33:12",
+    "query_filename": "0002_c003_00084280_0.jpg",
+    "query_camera": 3,
+    "matches": [
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.989,
+        "confidencePercentage": "98.9%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.9825,
+        "confidencePercentage": "98.25%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.8853,
+        "confidencePercentage": "88.53%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.8563,
+        "confidencePercentage": "85.63%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.8249,
+        "confidencePercentage": "82.49%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.6904,
+        "confidencePercentage": "69.04%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.6846,
+        "confidencePercentage": "68.46%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.206,
+        "confidencePercentage": "20.6%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0296_c019_00059405_1.jpg",
+        "confidence": 0.0074,
+        "confidencePercentage": "0.74%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0296_c016_00058220_1.jpg",
+        "confidence": 0.0061,
+        "confidencePercentage": "0.61%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0300_c017_00077925_0.jpg",
+        "confidence": 0.0022,
+        "confidencePercentage": "0.22%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0300_c001_00080690_0.jpg",
+        "confidence": 0.0021,
+        "confidencePercentage": "0.21%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0300_c014_00076820_0.jpg",
+        "confidence": 0.0009,
+        "confidencePercentage": "0.09%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0295_c015_00036585_0.jpg",
+        "confidence": 0.0007,
+        "confidencePercentage": "0.07%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0296_c012_00060335_1.jpg",
+        "confidence": 0.0004,
+        "confidencePercentage": "0.04%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0296_c013_00060505_1.jpg",
+        "confidence": 0.0003,
+        "confidencePercentage": "0.03%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 16:35:10",
+    "query_filename": "0002_c008_00084510_0.jpg",
+    "query_camera": 8,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.9949,
+        "confidencePercentage": "99.49%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.9943,
+        "confidencePercentage": "99.43%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.984,
+        "confidencePercentage": "98.4%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9764,
+        "confidencePercentage": "97.64%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.9401,
+        "confidencePercentage": "94.01%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9062,
+        "confidencePercentage": "90.62%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.8368,
+        "confidencePercentage": "83.68%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0177_c013_00070070_0.jpg",
+        "confidence": 0.0035,
+        "confidencePercentage": "0.35%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0300_c017_00077925_0.jpg",
+        "confidence": 0.0029,
+        "confidencePercentage": "0.29%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0300_c019_00077665_0.jpg",
+        "confidence": 0.0025,
+        "confidencePercentage": "0.25%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0300_c014_00076820_0.jpg",
+        "confidence": 0.0019,
+        "confidencePercentage": "0.19%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0177_c016_00068270_0.jpg",
+        "confidence": 0.0014,
+        "confidencePercentage": "0.14%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0177_c015_00068575_0.jpg",
+        "confidence": 0.0012,
+        "confidencePercentage": "0.12%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0295_c001_00038405_0.jpg",
+        "confidence": 0.0006,
+        "confidencePercentage": "0.06%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0296_c012_00060335_1.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 16:36:36",
+    "query_filename": "0035_c003_00001875_0.jpg",
+    "query_camera": 3,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0014_c016_00039135_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0014_c013_00040815_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9959,
+        "confidencePercentage": "99.59%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0038_c004_00008415_0.jpg",
+        "confidence": 0.9956,
+        "confidencePercentage": "99.56%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9949,
+        "confidencePercentage": "99.49%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9942,
+        "confidencePercentage": "99.42%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.9835,
+        "confidencePercentage": "98.35%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9781,
+        "confidencePercentage": "97.81%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0014_c014_00039365_0.jpg",
+        "confidence": 0.9696,
+        "confidencePercentage": "96.96%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9631,
+        "confidencePercentage": "96.31%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.6444,
+        "confidencePercentage": "64.44%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.6214,
+        "confidencePercentage": "62.14%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.2008,
+        "confidencePercentage": "20.08%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.0323,
+        "confidencePercentage": "3.23%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 16:39:18",
+    "query_filename": "0035_c011_00001085_0.jpg",
+    "query_camera": 11,
+    "matches": [
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9966,
+        "confidencePercentage": "99.66%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9953,
+        "confidencePercentage": "99.53%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0038_c004_00008415_0.jpg",
+        "confidence": 0.9944,
+        "confidencePercentage": "99.44%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0038_c003_00008480_1.jpg",
+        "confidence": 0.9941,
+        "confidencePercentage": "99.41%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9897,
+        "confidencePercentage": "98.97%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0038_c013_00001635_0.jpg",
+        "confidence": 0.9896,
+        "confidencePercentage": "98.96%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9811,
+        "confidencePercentage": "98.11%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0038_c014_00004120_0.jpg",
+        "confidence": 0.9618,
+        "confidencePercentage": "96.18%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0038_c016_00004340_0.jpg",
+        "confidence": 0.9476,
+        "confidencePercentage": "94.76%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9191,
+        "confidencePercentage": "91.91%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.8129,
+        "confidencePercentage": "81.29%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.8017,
+        "confidencePercentage": "80.17%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.6485,
+        "confidencePercentage": "64.85%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.1964,
+        "confidencePercentage": "19.64%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.1637,
+        "confidencePercentage": "16.37%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.0034,
+        "confidencePercentage": "0.34%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 16:41:20",
+    "query_filename": "0035_c003_00001875_0.jpg",
+    "query_camera": 3,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0014_c016_00039135_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0014_c013_00040815_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9959,
+        "confidencePercentage": "99.59%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0038_c004_00008415_0.jpg",
+        "confidence": 0.9956,
+        "confidencePercentage": "99.56%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9949,
+        "confidencePercentage": "99.49%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9942,
+        "confidencePercentage": "99.42%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.9835,
+        "confidencePercentage": "98.35%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9781,
+        "confidencePercentage": "97.81%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0014_c014_00039365_0.jpg",
+        "confidence": 0.9696,
+        "confidencePercentage": "96.96%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9631,
+        "confidencePercentage": "96.31%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.6444,
+        "confidencePercentage": "64.44%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.6214,
+        "confidencePercentage": "62.14%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.2008,
+        "confidencePercentage": "20.08%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.0323,
+        "confidencePercentage": "3.23%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:00:34",
+    "query_filename": "0035_c003_00001875_0.jpg",
+    "query_camera": 3,
+    "matches": [
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9995,
+        "confidencePercentage": "99.95%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0035_c004_00001775_1.jpg",
+        "confidence": 0.9994,
+        "confidencePercentage": "99.94%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9994,
+        "confidencePercentage": "99.94%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0038_c014_00004120_0.jpg",
+        "confidence": 0.9994,
+        "confidencePercentage": "99.94%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0038_c012_00001760_0.jpg",
+        "confidence": 0.9991,
+        "confidencePercentage": "99.91%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0038_c019_00003500_0.jpg",
+        "confidence": 0.9987,
+        "confidencePercentage": "99.87%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0038_c017_00003340_0.jpg",
+        "confidence": 0.9978,
+        "confidencePercentage": "99.78%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0038_c013_00001635_0.jpg",
+        "confidence": 0.9968,
+        "confidencePercentage": "99.68%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0027_c016_00011160_0.jpg",
+        "confidence": 0.9967,
+        "confidencePercentage": "99.67%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0030_c008_00049745_0.jpg",
+        "confidence": 0.9962,
+        "confidencePercentage": "99.62%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.9959,
+        "confidencePercentage": "99.59%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.9948,
+        "confidencePercentage": "99.48%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0038_c001_00001175_0.jpg",
+        "confidence": 0.9924,
+        "confidencePercentage": "99.24%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.9734,
+        "confidencePercentage": "97.34%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0038_c015_00004055_0.jpg",
+        "confidence": 0.9645,
+        "confidencePercentage": "96.45%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.6567,
+        "confidencePercentage": "65.67%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0518_c018_00046755_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:02:40",
+    "query_filename": "0002_c004_00084250_0.jpg",
+    "query_camera": 4,
+    "matches": [
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.9996,
+        "confidencePercentage": "99.96%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9994,
+        "confidencePercentage": "99.94%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9988,
+        "confidencePercentage": "99.88%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0177_c014_00068565_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0177_c015_00068575_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0177_c016_00068270_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0177_c017_00069460_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0106_c019_00018525_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0177_c001_00072000_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0177_c012_00069995_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0177_c013_00070070_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:03:15",
+    "query_filename": "0002_c004_00084250_0.jpg",
+    "query_camera": 4,
+    "matches": [
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0002_c005_00084980_0.jpg",
+        "confidence": 0.9996,
+        "confidencePercentage": "99.96%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9994,
+        "confidencePercentage": "99.94%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9988,
+        "confidencePercentage": "99.88%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0177_c014_00068565_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0177_c015_00068575_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0177_c016_00068270_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0177_c017_00069460_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0106_c019_00018525_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0177_c001_00072000_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0177_c012_00069995_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0177_c013_00070070_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0298_c018_00046485_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:04:51",
+    "query_filename": "0009_c001_00067370_0.jpg",
+    "query_camera": 1,
+    "matches": [
+      {
+        "camera": 14,
+        "matched_filename": "0009_c014_00070055_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0009_c012_00068000_0.jpg",
+        "confidence": 0.9993,
+        "confidencePercentage": "99.93%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0102_c013_00007955_0.jpg",
+        "confidence": 0.9992,
+        "confidencePercentage": "99.92%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0090_c003_00078435_1.jpg",
+        "confidence": 0.9982,
+        "confidencePercentage": "99.82%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0102_c017_00006795_1.jpg",
+        "confidence": 0.9888,
+        "confidencePercentage": "98.88%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0102_c019_00006585_0.jpg",
+        "confidence": 0.9723,
+        "confidencePercentage": "97.23%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0108_c006_00076665_3.jpg",
+        "confidence": 0.9721,
+        "confidencePercentage": "97.21%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0009_c016_00071025_0.jpg",
+        "confidence": 0.9676,
+        "confidencePercentage": "96.76%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0090_c004_00078385_0.jpg",
+        "confidence": 0.954,
+        "confidencePercentage": "95.4%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0096_c015_00026650_0.jpg",
+        "confidence": 0.9413,
+        "confidencePercentage": "94.13%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0108_c011_00076715_1.jpg",
+        "confidence": 0.9243,
+        "confidencePercentage": "92.43%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0096_c007_00030630_0.jpg",
+        "confidence": 0.9043,
+        "confidencePercentage": "90.43%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0090_c009_00078225_0.jpg",
+        "confidence": 0.43,
+        "confidencePercentage": "43.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0729_c008_00030525_0.jpg",
+        "confidence": 0.3346,
+        "confidencePercentage": "33.46%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0061_c010_00080095_0.jpg",
+        "confidence": 0.0033,
+        "confidencePercentage": "0.33%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0467_c005_00057775_0.jpg",
+        "confidence": 0.0023,
+        "confidencePercentage": "0.23%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0652_c002_00061490_0.jpg",
+        "confidence": 0.0005,
+        "confidencePercentage": "0.05%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:05:26",
+    "query_filename": "0009_c001_00067370_0.jpg",
+    "query_camera": 1,
+    "matches": [
+      {
+        "camera": 14,
+        "matched_filename": "0009_c014_00070055_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0009_c012_00068000_0.jpg",
+        "confidence": 0.9993,
+        "confidencePercentage": "99.93%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0102_c013_00007955_0.jpg",
+        "confidence": 0.9992,
+        "confidencePercentage": "99.92%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0090_c003_00078435_1.jpg",
+        "confidence": 0.9982,
+        "confidencePercentage": "99.82%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0102_c017_00006795_1.jpg",
+        "confidence": 0.9888,
+        "confidencePercentage": "98.88%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0102_c019_00006585_0.jpg",
+        "confidence": 0.9723,
+        "confidencePercentage": "97.23%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0108_c006_00076665_3.jpg",
+        "confidence": 0.9721,
+        "confidencePercentage": "97.21%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0009_c016_00071025_0.jpg",
+        "confidence": 0.9676,
+        "confidencePercentage": "96.76%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0090_c004_00078385_0.jpg",
+        "confidence": 0.954,
+        "confidencePercentage": "95.4%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0096_c015_00026650_0.jpg",
+        "confidence": 0.9413,
+        "confidencePercentage": "94.13%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0108_c011_00076715_1.jpg",
+        "confidence": 0.9243,
+        "confidencePercentage": "92.43%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0096_c007_00030630_0.jpg",
+        "confidence": 0.9043,
+        "confidencePercentage": "90.43%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0090_c009_00078225_0.jpg",
+        "confidence": 0.43,
+        "confidencePercentage": "43.0%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0729_c008_00030525_0.jpg",
+        "confidence": 0.3346,
+        "confidencePercentage": "33.46%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0061_c010_00080095_0.jpg",
+        "confidence": 0.0033,
+        "confidencePercentage": "0.33%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0467_c005_00057775_0.jpg",
+        "confidence": 0.0023,
+        "confidencePercentage": "0.23%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0652_c002_00061490_0.jpg",
+        "confidence": 0.0005,
+        "confidencePercentage": "0.05%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:12:47",
+    "query_filename": "0002_c005_00084980_0.jpg",
+    "query_camera": 5,
+    "matches": [
+      {
+        "camera": 2,
+        "matched_filename": "0002_c002_00030600_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0002_c007_00085070_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0002_c009_00084480_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0002_c006_00083470_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0002_c008_00084505_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0002_c010_00083760_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0002_c003_00084280_0.jpg",
+        "confidence": 0.9996,
+        "confidencePercentage": "99.96%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0002_c004_00084250_0.jpg",
+        "confidence": 0.9994,
+        "confidencePercentage": "99.94%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0002_c011_00083550_0.jpg",
+        "confidence": 0.9986,
+        "confidencePercentage": "99.86%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0177_c014_00068565_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0622_c015_00065805_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0102_c016_00005045_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0177_c017_00069460_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0106_c019_00018525_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0177_c001_00072000_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0177_c012_00069995_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0177_c013_00070070_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 17:42:57",
+    "query_filename": "0240_c019_00046800_0.jpg",
+    "query_camera": 19,
+    "matches": [
+      {
+        "camera": 17,
+        "matched_filename": "0240_c017_00046615_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0240_c013_00046050_0.jpg",
+        "confidence": 1,
+        "confidencePercentage": "100.0%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0240_c002_00044085_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0240_c015_00047220_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0240_c014_00047430_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0240_c016_00047685_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0240_c001_00045350_1.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0240_c012_00046160_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0005_c008_00077885_0.jpg",
+        "confidence": 0.4194,
+        "confidencePercentage": "41.94%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0192_c007_00079440_0.jpg",
+        "confidence": 0.002,
+        "confidencePercentage": "0.2%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0005_c009_00077840_0.jpg",
+        "confidence": 0.0004,
+        "confidencePercentage": "0.04%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0192_c010_00032190_0.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0005_c011_00076850_1.jpg",
+        "confidence": 0.0001,
+        "confidencePercentage": "0.01%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0005_c003_00077660_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0005_c004_00077615_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0005_c005_00078360_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0205_c006_00055610_2.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0368_c018_00060195_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 20:03:43",
+    "query_filename": "0005_c009_00077860_0.jpg",
+    "query_camera": 9,
+    "matches": [
+      {
+        "camera": 3,
+        "matched_filename": "0005_c003_00077660_0.jpg",
+        "confidence": 0.9995,
+        "confidencePercentage": "99.95%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0005_c010_00077035_0.jpg",
+        "confidence": 0.9985,
+        "confidencePercentage": "99.85%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0005_c011_00076850_1.jpg",
+        "confidence": 0.9728,
+        "confidencePercentage": "97.28%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0005_c005_00078360_0.jpg",
+        "confidence": 0.9318,
+        "confidencePercentage": "93.18%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0005_c002_00075730_0.jpg",
+        "confidence": 0.8863,
+        "confidencePercentage": "88.63%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0005_c004_00077615_0.jpg",
+        "confidence": 0.8202,
+        "confidencePercentage": "82.02%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0005_c008_00077885_0.jpg",
+        "confidence": 0.6393,
+        "confidencePercentage": "63.93%"
+      },
+      {
+        "camera": 7,
+        "matched_filename": "0005_c007_00078450_0.jpg",
+        "confidence": 0.2754,
+        "confidencePercentage": "27.54%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0237_c015_00065485_0.jpg",
+        "confidence": 0.0029,
+        "confidencePercentage": "0.29%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0005_c006_00076795_2.jpg",
+        "confidence": 0.0027,
+        "confidencePercentage": "0.27%"
+      },
+      {
+        "camera": 16,
+        "matched_filename": "0237_c016_00065285_0.jpg",
+        "confidence": 0.0021,
+        "confidencePercentage": "0.21%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0006_c014_00022335_0.jpg",
+        "confidence": 0.001,
+        "confidencePercentage": "0.1%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0006_c017_00023330_0.jpg",
+        "confidence": 0.0008,
+        "confidencePercentage": "0.08%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0240_c019_00046770_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0240_c001_00045350_1.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0240_c012_00046160_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0240_c013_00046050_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0104_c018_00022440_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 20:05:02",
+    "query_filename": "0014_c016_00039135_0.jpg",
+    "query_camera": 16,
+    "matches": [
+      {
+        "camera": 7,
+        "matched_filename": "0030_c007_00054870_1.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 15,
+        "matched_filename": "0014_c015_00039390_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 17,
+        "matched_filename": "0014_c017_00040250_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 13,
+        "matched_filename": "0014_c013_00040815_0.jpg",
+        "confidence": 0.9999,
+        "confidencePercentage": "99.99%"
+      },
+      {
+        "camera": 19,
+        "matched_filename": "0014_c019_00040055_0.jpg",
+        "confidence": 0.9998,
+        "confidencePercentage": "99.98%"
+      },
+      {
+        "camera": 14,
+        "matched_filename": "0014_c014_00039365_0.jpg",
+        "confidence": 0.9997,
+        "confidencePercentage": "99.97%"
+      },
+      {
+        "camera": 12,
+        "matched_filename": "0014_c012_00040735_0.jpg",
+        "confidence": 0.9995,
+        "confidencePercentage": "99.95%"
+      },
+      {
+        "camera": 2,
+        "matched_filename": "0035_c002_00000420_1.jpg",
+        "confidence": 0.9993,
+        "confidencePercentage": "99.93%"
+      },
+      {
+        "camera": 4,
+        "matched_filename": "0035_c004_00001775_1.jpg",
+        "confidence": 0.997,
+        "confidencePercentage": "99.7%"
+      },
+      {
+        "camera": 1,
+        "matched_filename": "0014_c001_00041040_0.jpg",
+        "confidence": 0.9922,
+        "confidencePercentage": "99.22%"
+      },
+      {
+        "camera": 10,
+        "matched_filename": "0035_c010_00001245_0.jpg",
+        "confidence": 0.9911,
+        "confidencePercentage": "99.11%"
+      },
+      {
+        "camera": 5,
+        "matched_filename": "0030_c005_00051590_1.jpg",
+        "confidence": 0.9806,
+        "confidencePercentage": "98.06%"
+      },
+      {
+        "camera": 3,
+        "matched_filename": "0035_c003_00001855_0.jpg",
+        "confidence": 0.9756,
+        "confidencePercentage": "97.56%"
+      },
+      {
+        "camera": 11,
+        "matched_filename": "0035_c011_00001055_0.jpg",
+        "confidence": 0.9736,
+        "confidencePercentage": "97.36%"
+      },
+      {
+        "camera": 8,
+        "matched_filename": "0038_c008_00008245_0.jpg",
+        "confidence": 0.9337,
+        "confidencePercentage": "93.37%"
+      },
+      {
+        "camera": 6,
+        "matched_filename": "0035_c006_00001085_1.jpg",
+        "confidence": 0.8763,
+        "confidencePercentage": "87.63%"
+      },
+      {
+        "camera": 9,
+        "matched_filename": "0030_c009_00049835_0.jpg",
+        "confidence": 0.7886,
+        "confidencePercentage": "78.86%"
+      },
+      {
+        "camera": 18,
+        "matched_filename": "0518_c018_00046755_0.jpg",
+        "confidence": 0,
+        "confidencePercentage": "0.0%"
+      }
+    ]
   }
 ]

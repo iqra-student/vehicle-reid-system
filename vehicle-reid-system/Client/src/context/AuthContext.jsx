@@ -1,18 +1,23 @@
-import { createContext, useContext, useState, useCallback, useEffect } from "react";import { jwtDecode } from "jwt-decode";
+import { createContext, useContext, useState, useCallback } from "react";
+import { jwtDecode } from "jwt-decode";
 import axiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
+  // Read the saved session synchronously on the first render, so route guards
+  // never see an empty "logged out" state while a valid session is stored.
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  }, []);
   const persistSession = useCallback((responseData) => {
     const { token: newToken, user: userFromApi } = responseData;
 
@@ -49,8 +54,7 @@ export function AuthProvider({ children }) {
           email,
           password,
         });
-        const resolvedUser = persistSession(data);
-        return resolvedUser;
+        return persistSession(data);
       } catch (err) {
         const message =
           err.response?.data?.message || "Signup failed. Please try again.";
@@ -63,7 +67,7 @@ export function AuthProvider({ children }) {
     [persistSession]
   );
 
-  // New: admin signup — separate backend route, gated by a secret key.
+  // Admin signup — separate backend route, creates a user with role "admin".
   const adminSignup = useCallback(
     async (name, email, password) => {
       setLoading(true);
@@ -74,8 +78,7 @@ export function AuthProvider({ children }) {
           email,
           password,
         });
-        const resolvedUser = persistSession(data);
-        return resolvedUser;
+        return persistSession(data);
       } catch (err) {
         const message =
           err.response?.data?.message ||
@@ -98,8 +101,7 @@ export function AuthProvider({ children }) {
           email,
           password,
         });
-        const resolvedUser = persistSession(data);
-        return resolvedUser;
+        return persistSession(data);
       } catch (err) {
         const message =
           err.response?.data?.message || "Invalid email or password.";
