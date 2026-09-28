@@ -8,6 +8,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');                                    // ---- NEW
 require('dotenv').config({ path: __dirname + '/.env' });
 const { createProxyMiddleware } = require('http-proxy-middleware');
 require('dotenv').config();
@@ -103,6 +104,22 @@ app.use(
 );
 
 app.use(express.json());
+
+// ---- UPDATED: serve plate images ----
+// Image-mode uploads are saved by detectionRoutes.js into
+//   <backend>/ml_service/results_plates
+// Video-tracking images written by the Python service may live in
+//   <backend>/../ml_service/results_plates
+// Both folders are served under /results_plates; Express checks the first,
+// and falls through to the second if the file is not found.
+app.use(
+  '/results_plates',
+  express.static(path.join(__dirname, 'ml_service', 'results_plates'))
+);
+app.use(
+  '/results_plates',
+  express.static(path.join(__dirname, '..', 'ml_service', 'results_plates'))
+);
 
 // ==========================================
 // Route Imports & Mounting

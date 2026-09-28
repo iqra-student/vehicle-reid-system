@@ -14,3 +14,5 @@ const plateVehicleSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('PlateVehicle', plateVehicleSchema);
+
+

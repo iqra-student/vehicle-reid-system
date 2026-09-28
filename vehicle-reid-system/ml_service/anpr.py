@@ -111,9 +111,7 @@ def process_anpr_frame(frame):
 
     return {"detected": True, "results": detections_output}
 
-
-def read_plate(frame):
- 
+def read_plate(frame, camera_id=None, save=True):
     result = process_anpr_frame(frame)
 
     if not result.get("detected") or not result.get("results"):
@@ -121,8 +119,10 @@ def read_plate(frame):
 
     best = max(result["results"], key=lambda r: r["confidence"])
 
-    return {
-        "plate_text": best["plate_text"] if best["plate_text"] != "UNKNOWN" else None,
+    plate_text = best["plate_text"] if best["plate_text"] != "UNKNOWN" else None
+
+    out = {
+        "plate_text": plate_text,
         "confidence": best["confidence"],
         "plate_box": best["plate_box"],
         "plate_type": best["plate_type"],
@@ -130,4 +130,21 @@ def read_plate(frame):
         "plate_crop": best["plate_crop"],
     }
 
+    # ---- save whole frame to Mongo + disk (3.1) ----
+    if save and plate_text:
+        try:
+            from plate_store import save_sighting
+            saved = save_sighting(
+                plate_number=plate_text,
+                camera_id=camera_id or "unknown",
+                confidence=best["confidence"],
+                source="image",
+                car_image_bgr=frame,        # whole frame = whole car scene
+            )
+            if saved:
+                out["saved"] = saved
+        except Exception as e:
+            # never let storage failure break detection
+            print(f"[anpr] save_sighting failed: {e}")
 
+    return out

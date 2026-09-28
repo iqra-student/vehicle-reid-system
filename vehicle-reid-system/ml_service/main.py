@@ -29,7 +29,6 @@ from ultralytics import YOLO
 from torchvision import transforms
 from PIL import Image
 
-
 # ============================================================
 # BASE DIRECTORY
 # ============================================================
@@ -49,7 +48,6 @@ TYPE_MAP = {
     1: "Sedan", 2: "SUV", 3: "Van", 4: "Hatchback", 5: "MPV",
     6: "Pickup", 7: "Bus", 8: "Truck", 9: "Estate",
 }
-
 
 def load_veri_labels(xml_path):
     """Parses test_label.xml into {filename: {vehicle_id, camera_id, color, type}}"""
@@ -77,7 +75,6 @@ def load_veri_labels(xml_path):
 
     return labels
 
-
 # Load labels once at startup
 VERI_LABEL_PATH = os.path.join(GALLERY_DIR, "test_label.xml")
 # Note: GALLERY_DIR points to image_test folder; test_label.xml sits one level up
@@ -99,7 +96,6 @@ else:
 
 MATCH_LOG_PATH = os.path.join(BASE_DIR, "match_log.json")
 match_log_lock = Lock()
-
 
 def append_match_log(query_filename, query_camera, matches):
     """Appends one /find-match result to match_log.json"""
@@ -126,7 +122,6 @@ def append_match_log(query_filename, query_camera, matches):
 
         with open(MATCH_LOG_PATH, "w") as f:
             json.dump(logs, f, indent=2)
-
 
 def read_match_log():
     """Reads all logged match results"""
@@ -155,13 +150,11 @@ except ImportError as e:
     read_plate = None
     plate_track = None
 
-
 # ============================================================
 # CONGESTION DETECTION
 # ============================================================
 
 from congestion_engine import CongestionEngine
-
 
 # ============================================================
 # CLIP-ReID
@@ -176,7 +169,6 @@ from model.make_model import make_model
 from config import cfg_base as cfg
 from pair_classifier import PairClassifier
 
-
 # ============================================================
 # DEVICE
 # ============================================================
@@ -185,7 +177,6 @@ device_type = "cuda" if torch.cuda.is_available() else "cpu"
 clip_device = device_type
 
 print(f"Using device: {clip_device}")
-
 
 # ============================================================
 # FASTAPI
@@ -196,7 +187,6 @@ app = FastAPI(
 )
 
 api_router = APIRouter(prefix="/api")
-
 
 # ============================================================
 # CORS
@@ -209,7 +199,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # ============================================================
 # STATIC DIRECTORIES
@@ -231,7 +220,6 @@ app.mount(
     name="static",
 )
 
-
 # ============================================================
 # VEHICLE GALLERY
 # ============================================================
@@ -248,7 +236,6 @@ if os.path.exists(GALLERY_DIR):
     )
 else:
     print(f"WARNING: Gallery directory not found: {GALLERY_DIR}")
-
 
 # ============================================================
 # LOAD CLIP-ReID MODEL (optional — congestion detection doesn't need this)
@@ -319,7 +306,6 @@ except Exception as e:
     clip_model = None
     classifier = None
 
-
 # ============================================================
 # CLIP IMAGE PREPROCESSING
 # ============================================================
@@ -334,7 +320,6 @@ clip_transform = transforms.Compose(
         ),
     ]
 )
-
 
 # ============================================================
 # CLIP EMBEDDING EXTRACTION
@@ -391,14 +376,12 @@ yolo_model = YOLO(yolo_weights_path)
 
 VEHICLE_CLASSES = [2, 3, 5, 7]
 
-
 # ============================================================
 # ANPR SETTINGS
 # ============================================================
 
 CROP_PADDING_RATIO = 0.08
 DETECTION_INPUT_MAX_DIM = 640
-
 
 # ============================================================
 # MODULE 3.1 - ANPR IMAGE PLATE DETECTION
@@ -439,7 +422,7 @@ async def plate_detect(
 
     try:
 
-        raw_result = read_plate(frame) or {}
+        raw_result = read_plate(frame, camera_id=camera_id, save=True) or {}
 
         plate_text = raw_result.get(
             "plate_text",
@@ -501,7 +484,6 @@ async def plate_detect(
             },
         )
 
-
 # ============================================================
 # MODULE 3.3 - PLATE-BASED VIDEO TRACKING
 # ============================================================
@@ -509,110 +491,95 @@ async def plate_detect(
 @api_router.post("/plate-track")
 async def plate_track_upload(
     video: UploadFile = File(...),
+    camera_id: str = Form("Camera_1"),
+    region: str = Form("US"),
 ):
-
     if plate_track is None:
         raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
 
     if not video.filename:
-        raise HTTPException(
-            status_code=400,
-            detail="Upload a camera video first",
-        )
+        raise HTTPException(status_code=400, detail="Upload a camera video first")
 
-    suffix = (
-        os.path.splitext(video.filename)[1]
-        or ".mp4"
-    )
-
+    suffix = os.path.splitext(video.filename)[1] or ".mp4"
     in_path = os.path.join(
         plate_track.RESULTS_DIR,
         f"{os.urandom(8).hex()}_in{suffix}",
     )
 
     try:
-
         contents = await video.read()
-
         if len(contents) > plate_track.MAX_UPLOAD_BYTES:
-
-            raise HTTPException(
-                status_code=413,
-                detail="Video is too large. Use a file under 40 MB.",
-            )
-
+            raise HTTPException(status_code=413, detail="Video is too large. Use a file under 40 MB.")
         with open(in_path, "wb") as handle:
             handle.write(contents)
-
     except OSError as exc:
-
-        raise HTTPException(
-            status_code=500,
-            detail=plate_track.disk_error(exc),
-        ) from exc
+        raise HTTPException(status_code=500, detail=plate_track.disk_error(exc)) from exc
 
     return {
         "job_id": plate_track.launch_job(
             in_path,
             delete_input=True,
+            region=region,
+            camera_id=camera_id,        # <-- ONLY CHANGE
         )
     }
-
 
 # ============================================================
 # MODULE 3.3 - SAMPLE VIDEO
 # ============================================================
 
 @api_router.post("/plate-track-sample")
-async def plate_track_sample():
-
+async def plate_track_sample(
+    camera_id: str = Form("Camera_1"),
+    region: str = Form("US"),
+):
     if plate_track is None:
         raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
 
-    sample = os.path.join(
-        plate_track.ROOT,
-        "sample.mp4",
-    )
-
+    sample = os.path.join(plate_track.ROOT, "sample.mp4")
     if not os.path.exists(sample):
-
-        raise HTTPException(
-            status_code=404,
-            detail="sample.mp4 is missing next to section_3_3.py",
-        )
+        raise HTTPException(status_code=404, detail="sample.mp4 is missing next to section_3_3.py")
 
     return {
         "job_id": plate_track.launch_job(
             sample,
             delete_input=False,
+            region=region,
+            camera_id=camera_id, 
         )
     }
-
 
 # ============================================================
 # MODULE 3.3 - TRACKING STATUS
 # ============================================================
+# ============================================================
+# MODULE 3.3 - TRACKING STATUS
+# ============================================================
+
+def _resolve_backend(job_id: str):
+    """Returns (region, backend_module) for a job, or raises HTTPException."""
+    region = plate_track.get_region_for_job(job_id)
+    if region == "NL":
+        import section_3_3_nl as backend
+        return region, backend
+    if region == "US":
+        import section_3_3_us as backend
+        return region, backend
+    raise HTTPException(status_code=404, detail="Unknown job")
+
 
 @api_router.get("/plate-track-status/{job_id}")
-async def plate_track_status(
-    job_id: str,
-):
-
+async def plate_track_status(job_id: str):
     if plate_track is None:
         raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
 
-    with plate_track.jobs_lock:
+    region, backend = _resolve_backend(job_id)
 
-        job = plate_track.jobs.get(job_id)
-
+    with backend.jobs_lock:
+        job = backend.jobs.get(job_id)
         if not job:
-            raise HTTPException(
-                status_code=404,
-                detail="Unknown job",
-            )
-
+            raise HTTPException(status_code=404, detail="Unknown job")
         done = job["status"] == "done"
-
         return {
             "status": job["status"],
             "frame": job["frame"],
@@ -620,85 +587,59 @@ async def plate_track_status(
             "message": job["message"],
             "plates": job.get("plates") or [],
             "error": job.get("error"),
-            "video_url": (
-                f"/api/plate-track-result/{job_id}"
-                if done
-                else None
-            ),
+            "video_url": f"/api/plate-track-result/{job_id}" if done else None,
+            "region": region,
         }
-
-
 # ============================================================
 # MODULE 3.3 - TRACKING RESULT
 # ============================================================
-
 @api_router.get("/plate-track-result/{job_id}")
-async def plate_track_result(
-    job_id: str,
-):
-
+async def plate_track_result(job_id: str):
     if plate_track is None:
         raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
 
-    with plate_track.jobs_lock:
+    region, backend = _resolve_backend(job_id)
 
-        job = plate_track.jobs.get(job_id)
-
+    with backend.jobs_lock:
+        job = backend.jobs.get(job_id)
         if not job:
-            raise HTTPException(
-                status_code=404,
-                detail="Unknown job",
-            )
-
+            raise HTTPException(status_code=404, detail="Unknown job")
         if job["status"] != "done":
-            raise HTTPException(
-                status_code=400,
-                detail="Still processing",
-            )
-
+            raise HTTPException(status_code=400, detail="Still processing")
         out_path = job["output"]
 
     if not os.path.exists(out_path):
+        raise HTTPException(status_code=404, detail="Result video missing")
 
-        raise HTTPException(
-            status_code=404,
-            detail="Result video missing",
-        )
-
-    return FileResponse(
-        out_path,
-        media_type="video/mp4",
-        filename="plate_tracking.mp4",
-    )
-
+    return FileResponse(out_path, media_type="video/mp4", filename="plate_tracking.mp4")
 
 # ============================================================
 # MODULE 3.3 - TRACKING SNAPSHOT IMAGES (car / plate crops)
 # ============================================================
-
 @api_router.get("/plate-track-image/{job_id}/{track_id}/{kind}")
 async def plate_track_image(job_id: str, track_id: int, kind: str):
-
     if plate_track is None:
         raise HTTPException(status_code=500, detail="ANPR tracking module not loaded.")
-
     if kind not in ("car", "plate"):
         raise HTTPException(status_code=400, detail="Invalid image kind")
 
-    with plate_track.jobs_lock:
-        job = plate_track.jobs.get(job_id)
+    region, backend = _resolve_backend(job_id)
+
+    with backend.jobs_lock:
+        job = backend.jobs.get(job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Unknown job")
         if job["status"] != "done":
             raise HTTPException(status_code=400, detail="Still processing")
 
-    path = plate_track.snapshot_image_path(job_id, track_id, kind)
+    if not hasattr(backend, "snapshot_image_path"):
+        raise HTTPException(status_code=404, detail="Not supported for this region")
 
+    path = backend.snapshot_image_path(job_id, track_id, kind)
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail="Image missing")
 
     return FileResponse(path, media_type="image/jpeg")
-
 
 # ============================================================
 # MODULE 4 - CONGESTION DETECTION
@@ -766,7 +707,6 @@ async def detect_congestion_endpoint(
         if os.path.exists(temp_video_path):
             os.remove(temp_video_path)
 
-
 # ============================================================
 # MODULE 4 - SERVE ANNOTATED CONGESTION VIDEO
 # ============================================================
@@ -787,7 +727,6 @@ async def get_video_stream(filename: str):
         raise HTTPException(status_code=404, detail="Annotated video not found")
 
     return FileResponse(file_path, media_type="video/mp4")
-
 
 # ============================================================
 # MODULE 4 - LIVE CCTV MJPEG FEED (continuous stream)
@@ -856,7 +795,6 @@ async def live_traffic_feed(camera_id: str):
             cap.release()
 
     return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
-
 
 # ============================================================
 # CLIP-ReID - CAMERA ID PARSING
@@ -1327,7 +1265,6 @@ async def dashboard_stats():
 # ============================================================
 
 app.include_router(api_router)
-
 
 # ============================================================
 # START SERVER

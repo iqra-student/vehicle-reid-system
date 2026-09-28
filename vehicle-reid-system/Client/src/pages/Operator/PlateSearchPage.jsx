@@ -31,6 +31,8 @@ const STATUS = {
   },
 };
 
+const NODE_BASE = "http://localhost:5000";
+
 function apiError(err, fallback) {
   const detail = err.response?.data?.detail;
   if (typeof detail === "string") return detail;
@@ -67,25 +69,47 @@ function CameraSelect({ cameras, value, onChange, includeAll }) {
 function TrailView({ trail }) {
   if (!trail || trail.length === 0) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-      {trail.map((s, idx) => (
-        <React.Fragment key={idx}>
-          <span className="px-2.5 py-1 rounded-lg bg-[#0D2440] text-white">
-            {s.cameraId}
-            <span className="block text-[10px] font-normal text-[#9FBBDA]">
-              {new Date(s.timestamp).toLocaleTimeString()}
-            </span>
-          </span>
-          {idx < trail.length - 1 && <span className="text-[#7BA4D0]">→</span>}
-        </React.Fragment>
-      ))}
+    <div className="flex flex-wrap items-start gap-3">
+      {trail.map((s, idx) => {
+        const raw = s.imageUrl || s.image || s.car_image_b64 || s.imageFilename;
+        const imgSrc = raw
+          ? (raw.startsWith("http") ? raw : NODE_BASE + (raw.startsWith("/") ? raw : "/" + raw))
+          : null;
+
+        return (
+          <React.Fragment key={idx}>
+            <div className="flex flex-col items-center w-32">
+              {imgSrc ? (
+                <img
+                  src={imgSrc}
+                  alt={s.cameraId || "car"}
+                  className="w-32 h-20 object-cover rounded-lg border border-[#DCE6F2] bg-[#0D2440]"
+                />
+              ) : (
+                <div className="w-32 h-20 bg-[#0D2440] rounded-lg flex items-center justify-center text-[10px] text-[#5B7699]">
+                  No image
+                </div>
+              )}
+              <span className="mt-1 text-[10px] font-semibold text-[#0D2440]">
+                {s.cameraId}
+              </span>
+              <span className="text-[10px] text-[#5B7699]">
+                {s.timestamp ? new Date(s.timestamp).toLocaleTimeString() : ""}
+              </span>
+            </div>
+            {idx < trail.length - 1 && (
+              <span className="text-[#7BA4D0] self-center text-lg">→</span>
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
 
-// The backend now embeds each car's snapshot directly as a base64 data URI
-// (item.car_image_b64), so there's no second request and no plate crop to
-// fetch or render — just show the picture, or a placeholder if none exists.
+// The backend embeds each car's snapshot as a base64 data URI in
+// item.car_image_b64 for video tracking results. If it's a web path,
+// prepend NODE_BASE so the browser fetches it from the Node server.
 function CarSnapshot({ src, alt, className }) {
   if (!src) {
     return (
@@ -94,7 +118,10 @@ function CarSnapshot({ src, alt, className }) {
       </div>
     );
   }
-  return <img src={src} alt={alt} className={className} />;
+  const resolved = src.startsWith("http") || src.startsWith("data:")
+    ? src
+    : NODE_BASE + (src.startsWith("/") ? src : "/" + src);
+  return <img src={resolved} alt={alt} className={className} />;
 }
 
 function uniqueTrackPlates(items) {
@@ -125,6 +152,7 @@ export default function PlateSearchPage() {
   const [trackError, setTrackError] = useState(null);
   const [trackPlates, setTrackPlates] = useState([]);
   const [trackVideoUrl, setTrackVideoUrl] = useState(null);
+  const [trackRegion, setTrackRegion] = useState("US");
 
   // Image scan
   const [selectedFile, setSelectedFile] = useState(null);
@@ -264,7 +292,11 @@ const videoBlob = new Blob([videoRes.data], {
     const formData = new FormData();
     formData.append("video", trackFile);
     formData.append("camera_id", cameraId);
-    await runTrackJob(() => axiosInstance.post(`/plate-track`, formData), "Uploading your video...");
+    formData.append("region", trackRegion);
+    await runTrackJob(
+      () => axiosInstance.post(`/plate-track`, formData),
+      "Uploading your video...",
+    );
   };
 
   const handleTrackSample = async () => {
@@ -274,7 +306,11 @@ const videoBlob = new Blob([videoRes.data], {
     }
     const formData = new FormData();
     formData.append("camera_id", cameraId);
-    await runTrackJob(() => axiosInstance.post(`/plate-track-sample`, formData), "Using sample.mp4...");
+    formData.append("region", trackRegion);
+    await runTrackJob(
+      () => axiosInstance.post(`/plate-track-sample`, formData),
+      "Using sample.mp4...",
+    );
   };
 
   const handleFileChange = (e) => {
@@ -396,7 +432,7 @@ const videoBlob = new Blob([videoRes.data], {
         </div>
       </div>
 
-      {/* PAGE 1: DETECTION & RECOGNITION (image + video, one page) */}
+      {/* PAGE 1: DETECTION & RECOGNITION */}
       {activeTab === "detect" && (
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-[#DCE6F2] shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -624,6 +660,24 @@ const videoBlob = new Blob([videoRes.data], {
                 {camerasError && (
                   <p className="text-[11px] text-[#B3261E] mt-1 font-medium">{camerasError}</p>
                 )}
+              </div>
+
+              {/* --- Plate region selector --- */}
+              <div>
+                <label className="block text-xs font-bold text-[#4A6382] uppercase tracking-wider mb-1.5">
+                  Choose
+                </label>
+                <select
+                  value={trackRegion}
+                  onChange={(e) => setTrackRegion(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#F3F6FB] border border-[#DCE6F2] rounded-xl text-sm font-semibold text-[#0D2440] outline-none focus:bg-white focus:border-[#2E5E99] transition"
+                >
+                  <option value="US">1</option>
+                  <option value="NL">2</option>
+                </select>
+                <p className="text-[11px] text-[#8CA3BF] mt-1">
+                  Matches the camera's region.
+                </p>
               </div>
 
               <form onSubmit={handleTrackUpload} className="flex flex-wrap items-center gap-3">
