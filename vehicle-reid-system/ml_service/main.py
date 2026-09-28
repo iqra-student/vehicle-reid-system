@@ -705,7 +705,9 @@ async def plate_track_image(job_id: str, track_id: int, kind: str):
 # ============================================================
 
 @app.post("/detect-congestion")
-async def detect_congestion_endpoint(
+def detect_congestion_endpoint(
+    # Plain "def" (not async): FastAPI runs it in a worker thread, so a long
+    # video analysis no longer freezes the whole server (dashboard, ReID, ...).
     video: UploadFile = File(...),
     camera_id: str = Form("CAM_01"),
     hold_time_sec: float = Form(2.0),
@@ -826,24 +828,14 @@ async def live_traffic_feed(camera_id: str):
                 time.sleep(1.0)
                 continue
 
-            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or 1280
-            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 720
-
-            # Road ROI Boundary Polygon
-            roi_poly = np.array([
-                [int(width * 0.05), height],
-                [int(width * 0.20), int(height * 0.15)],
-                [int(width * 0.80), int(height * 0.15)],
-                [int(width * 0.95), height]
-            ], dtype=np.int32)
-
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
                     break
 
-                # Let the engine calculate normalized speed, stopped status, and colors
-                annotated_frame = engine.process_frame(frame, camera_id=camera_id, roi_poly=roi_poly)
+                # No roi_poly passed: the engine learns the road region automatically
+                # from the first few seconds of vehicle detections, then keeps it.
+                annotated_frame = engine.process_frame(frame, camera_id=camera_id)
 
                 _, buffer = cv2.imencode('.jpg', annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                 frame_bytes = buffer.tobytes()
